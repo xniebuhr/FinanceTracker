@@ -62,4 +62,4 @@ git clone https://github.com/xniebuhr/FinanceTracker.git
 cd FinanceTracker
 ```
 2. Use the included batch script to launch both the backend and frontend servers:
-  ./start_project.bat
+  ```./start_project.bat```
