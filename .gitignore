@@ -5,3 +5,4 @@ appsettings.Production.json
 bin/
 obj/
 *.user
+.env
