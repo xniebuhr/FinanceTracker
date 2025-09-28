@@ -1,8 +1,7 @@
-.vs/
 appsettings.json
 appsettings.Development.json
 appsettings.Production.json
-secrets.json
+.vs/
 bin/
 obj/
 *.user
