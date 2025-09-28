@@ -52,14 +52,6 @@ Testing will be a key part of this project to ensure reliability, security, and 
 
 This project is actively being developed. Core transaction functionality is in place, and authentication is the next major milestone. Testing, clean UI, graphing, and deployment will follow.
 
-## Setup (Local)
+## Setup - Not currently available
 
-To run the project locally:
-
-1. Clone the repository
-```bash
-git clone https://github.com/xniebuhr/FinanceTracker.git
-cd FinanceTracker
-```
-2. Use the included batch script to launch both the backend and frontend servers:
-  ```./start_project.bat```
+Local setup is currently disabled due to security concerns. The application will be hosted soon with proper authentication and access controls in place.
