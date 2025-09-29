@@ -5,7 +5,7 @@ A full-stack personal finance tracker built with Angular and ASP.NET Core. This 
 ## Project Goals
 
 - **User Authentication**  
-  Implement secure login and registration using JWT-based authentication to support multi-user access and personalized data.
+  Implement secure login and registration using ASP.NET Identity authentication to support multi-user access and personalized data.
 
 - **Data Visualization**  
   Integrate dynamic graphs and charts to help users understand spending habits, income trends, and financial goals.
@@ -23,7 +23,7 @@ A full-stack personal finance tracker built with Angular and ASP.NET Core. This 
 
 - **Frontend**: Angular (standalone components, reactive patterns, service-based architecture)
 - **Backend**: ASP.NET Core Web API with Entity Framework
-- **Database**: Currently using MSSQLLocalDB, planning to migrate to Azure SQL Database
+- **Database**: Currently migrating to Azure SQL Database
 - **Dev Tools**: Batch scripts for workflow automation, Git for version control
 
 ## Current Features
@@ -44,7 +44,7 @@ Testing will be a key part of this project to ensure reliability, security, and 
 - **End-to-End Testing**
   - Cypress or Selenium to simulate real user flows across frontend and backend
 - **Security Testing**
-  - Ensure endpoints are protected, tokens are required, and unauthorized access is blocked
+  - Ensure endpoints are protected and unauthorized access is blocked
 - **CI / CD Integration**
   - Automated test runs on every push using GitHub Actions (planned)
 
@@ -54,4 +54,4 @@ This project is actively being developed. Core transaction functionality is in p
 
 ## Setup - Not currently available
 
-Local setup is currently disabled due to security concerns. The application will be hosted soon with proper authentication and access controls in place.
+Local setup is currently disabled while authentication and database migration are in progress. The application will be publicly accessible soon with proper authentication and access controls in place.
