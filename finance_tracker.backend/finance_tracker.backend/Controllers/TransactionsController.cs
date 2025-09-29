@@ -1,22 +1,21 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-
+﻿using finance_tracker.backend.Data;
 using finance_tracker.backend.Models;
-using finance_tracker.backend.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 
 namespace finance_tracker.backend.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class TransactionsController : ControllerBase
     {
-        private readonly FinanceContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public TransactionsController(FinanceContext context)
+        public TransactionsController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -25,14 +24,21 @@ namespace finance_tracker.backend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Transaction>>> GetTransaction()
         {
-            return await _context.Transactions.ToListAsync();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return await _context.Transactions
+                .Where(t => t.ApplicationUserId == userId)
+                .ToListAsync();
+
         }
 
-        // GET: api/transactions/5
+        // GET: api/transactions/id
         [HttpGet("{id}")]
         public async Task<ActionResult<Transaction>> GetTransaction(int id)
         {
-            var transaction = await _context.Transactions.FindAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var transaction = await _context.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id && t.ApplicationUserId == userId);
 
             if (transaction == null)
             {
@@ -45,7 +51,15 @@ namespace finance_tracker.backend.Controllers
         // POST: api/transactions
         [HttpPost]
         public async Task<ActionResult<Transaction>> PostTransaction(Transaction transaction)
-        {
+        { 
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            transaction.ApplicationUserId = userId;
+
+            if (transaction.IsRecurring && transaction.Recurrence == null)
+            {
+                return BadRequest("Recurring transactions must specify a recurrence interval.");
+            }
+
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
 
@@ -56,37 +70,42 @@ namespace finance_tracker.backend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTransaction(int id, Transaction updatedTransaction)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (id != updatedTransaction.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(updatedTransaction).State = EntityState.Modified;
+            var existingTransaction = await _context.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id && t.ApplicationUserId == userId);
 
-            try
+            if (existingTransaction == null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Transactions.Any(t => t.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
-            return NoContent(); // standard response for successful PUT
+            // Update fields
+            existingTransaction.Type = updatedTransaction.Type;
+            existingTransaction.Amount = updatedTransaction.Amount;
+            existingTransaction.Date = updatedTransaction.Date;
+            existingTransaction.Description = updatedTransaction.Description;
+            existingTransaction.IsRecurring = updatedTransaction.IsRecurring;
+            existingTransaction.Recurrence = updatedTransaction.Recurrence;
+
+            await _context.SaveChangesAsync();
+            return NoContent(); // standard for successful PUT
+
         }
 
         // DELETE: api/transactions/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransaction(int id)
         {
-            var transaction = await _context.Transactions.FindAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var transaction = await _context.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id && t.ApplicationUserId == userId);
+
             if (transaction == null)
             {
                 return NotFound();
@@ -95,7 +114,7 @@ namespace finance_tracker.backend.Controllers
             _context.Transactions.Remove(transaction);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // standard response for successful DELETE
+            return NoContent(); // standard for successful DELETE
         }
     }
 }

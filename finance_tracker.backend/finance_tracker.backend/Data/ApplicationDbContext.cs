@@ -7,8 +7,23 @@ namespace finance_tracker.backend.Data
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) { }
+            : base(options) {}
 
         public DbSet<Transaction> Transactions { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<Transaction>()
+                .Property(t => t.Type)
+                .HasConversion<string>();
+
+            builder.Entity<Transaction>()
+                .Property(t => t.Recurrence)
+                .HasConversion<string>();
+
+        }
+
     }
 }
