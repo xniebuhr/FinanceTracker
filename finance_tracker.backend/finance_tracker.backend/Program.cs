@@ -23,15 +23,15 @@ var dbName = Environment.GetEnvironmentVariable("DB_NAME");
 
 if (environment == "Development")
 {
-    dbUser = Environment.GetEnvironmentVariable("ENTRA_USER_ID");
-    dbPassword = Environment.GetEnvironmentVariable("ENTRA_PASSWORD");
+    dbUser = Environment.GetEnvironmentVariable("ADMIN_ID");
+    dbPassword = Environment.GetEnvironmentVariable("ADMIN_PASSWORD");
 
-    connectionString = $"Server=tcp:{dbServer}.database.windows.net,1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Password\";";
+    connectionString = $"Server=tcp:{dbServer}.database.windows.net,1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 }
 else
 {
-    dbUser = Environment.GetEnvironmentVariable("GUEST_USER_ID");
-    dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+    dbUser = Environment.GetEnvironmentVariable("GUEST_ID");
+    dbPassword = Environment.GetEnvironmentVariable("GUEST_PASSWORD");
 
     connectionString = $"Server=tcp:{dbServer}.database.windows.net,1433;Initial Catalog={dbName};Persist Security Info=False;User ID={dbUser};Password={dbPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 }
@@ -56,7 +56,7 @@ builder.Services.AddCors(options =>
 
     options.AddPolicy("Production", policy =>
     {
-        policy.WithOrigins("domain")
+        policy.WithOrigins("DOMAIN.com")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials();

@@ -23,7 +23,9 @@ namespace finance_tracker.backend.Data
                 .Property(t => t.Recurrence)
                 .HasConversion<string>();
 
+            builder.Entity<Transaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18,4);
         }
-
     }
 }
