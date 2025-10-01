@@ -14,7 +14,7 @@ A full-stack personal finance tracker built with Angular and ASP.NET Core. This 
   Multi-layered test coverage to ensure reliability and security
   
 - **Live Deployment**  
-  Host the application online for public access, removing the need for local setup. (Deployment platform TBD)
+  Host the application online for public access, removing the need for local setup. (Deployment TBD)
 
 - **Clean Architecture & Repo Hygiene**  
   Maintain a modular, maintainable codebase with clear separation of concerns, semantic HTML, and professional documentation.
@@ -48,9 +48,9 @@ Testing will be a key part of this project to ensure reliability, security, and 
 - **CI / CD Integration**
   - Automated test runs on every push using GitHub Actions (planned)
 
-## Status
+## Status & Roadmap
 
-This project is actively being developed. Core transaction functionality is in place, and authentication is the next major milestone. Testing, clean UI, graphing, and deployment will follow.
+This project is actively being developed. Core transaction functionality is in place, and authentication is nearly completed. Testing, clean UI, graphing, and deployment will follow.
 
 ## Setup - Not currently available
 
