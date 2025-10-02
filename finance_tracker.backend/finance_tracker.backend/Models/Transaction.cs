@@ -21,27 +21,27 @@ namespace finance_tracker.backend.Models
 	{
 		public int Id { get; set; }
 
-		[Required]
-		public DateTime Date { get; set; }
+        [Required]
+        public TransactionType Type { get; set; }
 
-		[Required]
-		public string Category { get; set; }
+        [Required, MaxLength(100)]
+        public string Category { get; set; }
 
-		[Required]
+        [Required]
 		public decimal Amount { get; set; }
 
-		[Required]
-		public TransactionType Type { get; set; }
+        [Required]
+		public DateTime Date { get; set; }
 
 		public string? Description { get; set; }
-
-		[Required]
-		[ForeignKey("ApplicationUser")]
-		public string ApplicationUserId { get; set; }
-		public ApplicationUser ApplicationUser { get; set; }
 
 		public bool IsRecurring { get; set; }
 
 		public RecurrenceInterval? Recurrence { get; set; }
-	}
+
+        [Required]
+        [ForeignKey("ApplicationUser")]
+        public string ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+
 using finance_tracker.backend.Models;
 
 namespace finance_tracker.backend.Data
@@ -26,6 +27,12 @@ namespace finance_tracker.backend.Data
             builder.Entity<Transaction>()
                 .Property(t => t.Amount)
                 .HasPrecision(18,4);
+
+            builder.Entity<Transaction>()
+                .HasOne(t => t.ApplicationUser)
+                .WithMany()
+                .HasForeignKey(t => t.ApplicationUserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
