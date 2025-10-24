@@ -35,22 +35,29 @@ A full-stack personal finance tracker built with Angular and ASP.NET Core. This 
 
 ## Testing Strategy (planned)
 
-Testing will be a key part of this project to ensure reliability, security, and maintainability. Planned testing layers include:
-- **Unit Testing**
-  - Angular: Jasmine + Karma for component logic
-  - ASP.Net Core: xUnit for backend services and API endpoints
-- **Integration Testing**
-  - Validate backend behavior across controllers, services, and database interactions
-- **End-to-End Testing**
-  - Cypress or Selenium to simulate real user flows across frontend and backend
-- **Security Testing**
-  - Ensure endpoints are protected and unauthorized access is blocked
-- **CI / CD Integration**
-  - Automated test runs on every push using GitHub Actions (planned)
+Testing will be a key part of this project to ensure reliability, security, and maintainability. This strategy follows a layered approach, combining functional, integration, and security testing to align with the best and most secure practices.
+### **Frontend**
+- Unit testing: Jasmine
+- Test runner: Karma
+- Test Data Generation (possibly): Faker.js
+### **Backend**
+- Unit / integration testing: xUnit
+- Mocking frameworks: Moq
+- Test data generation: Bogus
+- Assertations: FluentAssertions
+- API contract / regression testing: Postman + Newman  
+### **End to End Testing**
+- E2E testing: Cypress
+- SAST: GitHub CodeQL
+- DAST: OWASP ZAP
+- Dependency scanning: GitHub Dependabot and OWASP Dependency-Check
+### **CI / CD Integration**
+  - Automated test runs on every push using GitHub Actions, integrating security scans and dependency checks into the workflow
+  - Deployment will be gated on tests and scans
 
 ## Status & Roadmap
 
-This project is actively being developed. Core transaction functionality is in place, and authentication is nearly completed. Testing, clean UI, graphing, and deployment will follow.
+This project is actively being developed. Core transaction functionality is in place, and authentication is basically complete. Testing is currently in progress and clean UI, graphing, and deployment will follow.
 
 ## Setup - Not currently available
 
