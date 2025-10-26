@@ -39,18 +39,15 @@ Testing will be a key part of this project to ensure reliability, security, and 
 ### **Frontend**
 - Unit testing: Jasmine
 - Test runner: Karma
-- Test Data Generation (possibly): Faker.js
 ### **Backend**
 - Unit / integration testing: xUnit
-- Mocking frameworks: Moq
-- Test data generation: Bogus
-- Assertations: FluentAssertions
-- API contract / regression testing: Postman + Newman  
 ### **End to End Testing**
 - E2E testing: Cypress
 - SAST: GitHub CodeQL
 - DAST: OWASP ZAP
-- Dependency scanning: GitHub Dependabot and OWASP Dependency-Check
+- Dependency scanning: GitHub Dependabot or OWASP Dependency-Check
+### **Infra / Security***
+- Terraform & Trivy 
 ### **CI / CD Integration**
   - Automated test runs on every push using GitHub Actions, integrating security scans and dependency checks into the workflow
   - Deployment will be gated on tests and scans
