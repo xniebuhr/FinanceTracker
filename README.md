@@ -23,7 +23,7 @@ A full-stack personal finance tracker built with Angular and ASP.NET Core. This 
 
 - **Frontend**: Angular (standalone components, reactive patterns, service-based architecture)
 - **Backend**: ASP.NET Core Web API with Entity Framework
-- **Database**: Currently migrating to Azure SQL Database
+- **Database**: Azure SQL Database on my Azure server
 - **Dev Tools**: Batch scripts for workflow automation, Git for version control
 
 ## Current Features
