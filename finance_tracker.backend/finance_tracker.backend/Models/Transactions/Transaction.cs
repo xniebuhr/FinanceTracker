@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using finance_tracker.backend.Models.Users;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace finance_tracker.backend.Models
+namespace finance_tracker.backend.Models.Transactions
 {
 	public enum TransactionType
 	{
@@ -31,7 +32,7 @@ namespace finance_tracker.backend.Models
 		public decimal Amount { get; set; }
 
         [Required]
-		public DateTime Date { get; set; }
+		public DateTime TransactionDate { get; set; }
 
 		public string? Description { get; set; }
 

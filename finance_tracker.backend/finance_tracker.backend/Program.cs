@@ -1,16 +1,14 @@
-using System.Text;
-
-using Microsoft.EntityFrameworkCore;
-
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-
-using Microsoft.IdentityModel.Tokens;
-
 using DotNetEnv;
-
 using finance_tracker.backend.Data;
-using finance_tracker.backend.Models;
+using finance_tracker.backend.Models.Auth;
+using finance_tracker.backend.Models.Users;
+using finance_tracker.backend.Services.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +16,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Load secrets from .env
 Env.Load("secrets.env");
 
-// Connect to database
+// Include environment vars in config
+builder.Configuration.AddEnvironmentVariables();
+
+// Build database connection
 var rawConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
 var connectionString = rawConnection
@@ -56,7 +57,16 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Get JWT settings
+// Bind JwtSettings from config 
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt"));
+builder.Services.AddSingleton(resolver =>
+    resolver.GetRequiredService<IOptions<JwtSettings>>().Value);
+
+// Register TokenService for DI
+builder.Services.AddSingleton<TokenService>();
+
+// Get JWT settings from config
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];

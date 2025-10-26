@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
-using finance_tracker.backend.Models;
+using finance_tracker.backend.Models.Users;
+using finance_tracker.backend.Models.Transactions;
 
 namespace finance_tracker.backend.Data
 {

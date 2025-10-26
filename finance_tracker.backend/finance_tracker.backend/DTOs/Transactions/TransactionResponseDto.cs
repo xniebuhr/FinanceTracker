@@ -1,15 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using finance_tracker.backend.Models.Transactions;
 
-using finance_tracker.backend.Models;
-
-namespace finance_tracker.backend.DTOs
+namespace finance_tracker.backend.DTOs.Transactions
 {
-    public class TransactionDto
+    public class TransactionResponseDto
     {
+        [Required]
         public int Id { get; set; }
 
         [Required]
-        public TransactionType Type { get; set; }           // "Income" | "Expense"
+        public TransactionType Type { get; set; }
 
         [Required, MaxLength(100)]
         public string Category { get; set; }
@@ -18,12 +18,12 @@ namespace finance_tracker.backend.DTOs
         public decimal Amount { get; set; }
 
         [Required]
-        public DateTime Date { get; set; }           // ISO 8601 (e.g., "2025-09-30")
+        public DateTime TransactionDate { get; set; }
         
         public string? Description { get; set; }
         
         public bool IsRecurring { get; set; }
         
-        public RecurrenceInterval? Recurrence { get; set; }    // "Weekly" | "Monthly" | "Quarterly" | "Yearly" | null
+        public RecurrenceInterval? Recurrence { get; set; }
     }
 }
