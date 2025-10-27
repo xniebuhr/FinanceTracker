@@ -1,22 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace finance_tracker.backend.DTOs.Auth.Register
+﻿namespace finance_tracker.backend.DTOs.Auth.Register
 {
     public class RegisterResponseDto
     {
-        [Required]
         public string Id { get; set; }
 
-        [Required]
+        public string Username { get; set; }
+
         public string FirstName { get; set; }
 
-        [Required]
         public string AccessToken { get; set; }
 
-        [Required]
         public string RefreshToken { get; set; }
 
-        [Required]
         public DateTime ExpiresAt { get; set; }
     }
 }

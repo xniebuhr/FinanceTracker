@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using finance_tracker.backend.Models.Users;
+﻿using finance_tracker.backend.Models.Users;
 using finance_tracker.backend.Models.Transactions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace finance_tracker.backend.Data
 {
@@ -26,7 +26,7 @@ namespace finance_tracker.backend.Data
 
             builder.Entity<Transaction>()
                 .Property(t => t.Amount)
-                .HasPrecision(18,4);
+                .HasPrecision(18,2);
 
             builder.Entity<Transaction>()
                 .HasOne(t => t.ApplicationUser)

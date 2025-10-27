@@ -25,7 +25,7 @@ namespace finance_tracker.backend.DTOs.Users
             {
                 yield return new ValidationResult(
                     "At least one field must be provided to update user info.",
-                    new[] { nameof(FirstName), nameof(LastName), nameof(PhoneNumber) });
+                    new[] { nameof(Username), nameof(FirstName), nameof(LastName), nameof(PhoneNumber) });
             }
         }
     }

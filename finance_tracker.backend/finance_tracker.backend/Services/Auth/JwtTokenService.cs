@@ -15,11 +15,11 @@ namespace finance_tracker.backend.Services.Auth
         DateTime GetRefreshTokenExpiry();
     }
 
-    public class TokenService : IJwtTokenService
+    public class JwtTokenService : IJwtTokenService
     {
         private readonly JwtSettings _jwtSettings;
 
-        public TokenService(IConfiguration config)
+        public JwtTokenService(IConfiguration config)
         {
             _jwtSettings = config.GetSection("Jwt").Get<JwtSettings>()
                 ?? throw new ArgumentNullException(nameof(config), "Jwt settings not configured");

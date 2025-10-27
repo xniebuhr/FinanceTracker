@@ -1,11 +1,11 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using finance_tracker.backend.Data;
+﻿using finance_tracker.backend.Data;
 using finance_tracker.backend.DTOs.Shared;
 using finance_tracker.backend.DTOs.Transactions;
 using finance_tracker.backend.Models.Transactions;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace finance_tracker.backend.Controllers
 {

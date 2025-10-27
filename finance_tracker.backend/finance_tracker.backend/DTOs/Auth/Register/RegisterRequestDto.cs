@@ -17,8 +17,10 @@ namespace finance_tracker.backend.DTOs.Auth.Register
         public string Password { get; set; }
 
         [Required]
+        [MaxLength(50)]
         public string FirstName { get; set; }
 
+        [MaxLength(50)]
         public string? LastName { get; set; }
 
         [Phone]

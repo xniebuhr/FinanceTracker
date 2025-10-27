@@ -114,6 +114,7 @@ namespace finance_tracker.backend.Controllers
                 Data = new RegisterResponseDto
                 {
                     Id = user.Id,
+                    Username = user.UserName,
                     FirstName = user.FirstName,
                     AccessToken = accessToken.AccessToken,
                     ExpiresAt = accessToken.ExpiresAt,
@@ -311,7 +312,7 @@ namespace finance_tracker.backend.Controllers
             }
 
             // Find user by ID
-            var user = await _userManager.FindByIdAsync(dto.UserId);
+            var user = await _userManager.FindByIdAsync(dto.Id);
             
             // User not found
             if (user == null)

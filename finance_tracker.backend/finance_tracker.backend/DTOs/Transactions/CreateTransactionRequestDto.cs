@@ -18,6 +18,7 @@ namespace finance_tracker.backend.DTOs.Transactions
         [Required]
         public DateTime TransactionDate { get; set; }
 
+        [MaxLength(500)]
         public string? Description { get; set; }
 
         public bool IsRecurring { get; set; }
