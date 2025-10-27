@@ -54,7 +54,7 @@ Testing will be a key part of this project to ensure reliability, security, and 
 
 ## Status & Roadmap
 
-This project is actively being developed. Core transaction functionality is in place, and authentication is basically complete. Testing is currently in progress and clean UI, graphing, and deployment will follow.
+This project is actively being developed. Core transaction functionality is in place, and authentication has finally been fully completed. Testing is currently in progress and clean UI, graphing, and deployment will follow.
 
 ## Setup - Not currently available
 
