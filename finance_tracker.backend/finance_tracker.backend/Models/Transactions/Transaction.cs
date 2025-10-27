@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using finance_tracker.backend.Models.Users;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace finance_tracker.backend.Models
+namespace finance_tracker.backend.Models.Transactions
 {
 	public enum TransactionType
 	{
@@ -21,27 +22,26 @@ namespace finance_tracker.backend.Models
 	{
 		public int Id { get; set; }
 
-        [Required]
         public TransactionType Type { get; set; }
 
-        [Required, MaxLength(100)]
-        public string Category { get; set; }
+		[Required, MaxLength(100)]
+		public string Category { get; set; } = string.Empty;
 
-        [Required]
 		public decimal Amount { get; set; }
 
-        [Required]
-		public DateTime Date { get; set; }
+		public DateTime TransactionDate { get; set; }
 
+		[MaxLength(500)]
 		public string? Description { get; set; }
 
 		public bool IsRecurring { get; set; }
 
 		public RecurrenceInterval? Recurrence { get; set; }
 
-        [Required]
-        [ForeignKey("ApplicationUser")]
-        public string ApplicationUserId { get; set; }
-        public ApplicationUser? ApplicationUser { get; set; }
+		[Required]
+		[ForeignKey("ApplicationUser")]
+		public string ApplicationUserId { get; set; } = string.Empty;
+        
+		public ApplicationUser? ApplicationUser { get; set; }
     }
 }

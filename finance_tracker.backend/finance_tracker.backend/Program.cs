@@ -1,26 +1,38 @@
-using System.Text;
-
-using Microsoft.EntityFrameworkCore;
-
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-
-using Microsoft.IdentityModel.Tokens;
-
-using DotNetEnv;
-
 using finance_tracker.backend.Data;
-using finance_tracker.backend.Models;
+using finance_tracker.backend.Models.Auth;
+using finance_tracker.backend.Models.Users;
+using finance_tracker.backend.Services.Auth;
+using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ============================
+// Load configuration and secrets
+// ============================
+
 // Load secrets from .env
 Env.Load("secrets.env");
 
-// Connect to database
+// And env variables to configuration
+builder.Configuration.AddEnvironmentVariables();
+
+// ============================
+// Build database connection string
+// ============================
+
+// Pull raw connection string template from appsettings.json
 var rawConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
+// Replace placeholders with environment variables
+// - Use ADMIN credentials in Development
+// - Use GUEST credentials in Production
 var connectionString = rawConnection
     .Replace("{SERVER_NAME}", Environment.GetEnvironmentVariable("SERVER_NAME"))
     .Replace("{DB_NAME}", Environment.GetEnvironmentVariable("DB_NAME"))
@@ -29,15 +41,25 @@ var connectionString = rawConnection
     .Replace("{DB_PASSWORD}", Environment.GetEnvironmentVariable(
         builder.Environment.IsDevelopment() ? "ADMIN_PASSWORD" : "GUEST_PASSWORD"));
 
-// Add EF Core & Identity
+// ============================
+// Register EF Core + Identity
+// ============================
+
+// Add EF Core DbContext with SQL Server provider
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Add ASP.NET Core Identity with ApplicationUser
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// Add CORS policy
+// ============================
+// Configure CORS policies
+// ============================
+
+// Allow Angular dev server in Development
+// Allow production frontend in Production
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", policy =>
@@ -56,11 +78,27 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Get JWT settings
+// ============================
+// Configure JWT authentication
+// ============================
+
+// Bind JwtSettings from config 
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt"));
+
+// Make JwtSettings injectable as a singleton
+builder.Services.AddSingleton(resolver =>
+    resolver.GetRequiredService<IOptions<JwtSettings>>().Value);
+
+// Register TokenService for DI
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+// Pull JWT values directly for authentication setup
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
+// Configure authentication middleware
 builder.Services.AddAuthentication(
     options =>
     {
@@ -84,28 +122,48 @@ builder.Services.AddAuthentication(
         };
     });
 
+// ============================
+// Add controllers, Swagger, and authorization
+// ============================
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 
+// ============================
+// Build the app
+// ============================
+
 var app = builder.Build();
 
-// Use appropriate environment
+// ============================
+// Configure middleware pipeline
+// ============================
+
 if (app.Environment.IsDevelopment())
-{
+{   
+    // Dev: Allow Angular dev server + Swagger UI
     app.UseCors("Development");
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 else
 {
+    // Prod: Enforce HSTS + production CORS
     app.UseHsts();
     app.UseCors("Production");
 }
 
+// Always use HTTPS
 app.UseHttpsRedirection();
+
+// Enable authentication & authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map controllers to routes
 app.MapControllers();
+
+// Run the app
 app.Run();
