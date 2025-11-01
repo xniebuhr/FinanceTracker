@@ -46,7 +46,7 @@ Testing will be a key part of this project to ensure reliability, security, and 
 - SAST: GitHub CodeQL
 - DAST: OWASP ZAP
 - Dependency scanning: GitHub Dependabot or OWASP Dependency-Check
-### **Infra / Security**
+### **Containerized testing**
 - Docker & Trivy
 ### **CI / CD Integration**
   - Automated test runs on every push using GitHub Actions, integrating security scans and dependency checks into the workflow
