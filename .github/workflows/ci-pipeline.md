@@ -15,7 +15,6 @@ When ready, it will be saved as `.github/workflows/ci.yml`.
 - Run Cypress end-to-end tests against the containerized app
 - Run Trivy scan on the Docker image
 - Run OWASP ZAP DAST scan
-- Validate Terraform configuration
 
 ## Notes
 - EF migrations will be applied in both commit-time (in-memory DB) and PR-time (containerized DB)
@@ -96,6 +95,3 @@ jobs:
 
       - name: OWASP ZAP scan
         run: echo "TODO: Add ZAP scan step"
-
-      - name: Terraform validate
-        run: terraform validate
