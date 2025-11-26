@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "finance_tracker.backend", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "finance_tracker.backend.Tests", "finance_tracker.backend.Tests\finance_tracker.backend.Tests.csproj", "{D3D838BC-4B26-4BA8-9A43-35888B20CC14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{2487DADB-CA05-4ACE-99BE-AD7F25F73A2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2487DADB-CA05-4ACE-99BE-AD7F25F73A2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2487DADB-CA05-4ACE-99BE-AD7F25F73A2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3D838BC-4B26-4BA8-9A43-35888B20CC14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3D838BC-4B26-4BA8-9A43-35888B20CC14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3D838BC-4B26-4BA8-9A43-35888B20CC14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3D838BC-4B26-4BA8-9A43-35888B20CC14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
