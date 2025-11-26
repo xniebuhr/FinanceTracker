@@ -1,0 +1,224 @@
+name: CI - Validation
+
+# Runs on every push to any branch
+on:
+  push:
+    branches: ['**']
+  workflow_call:  # Allows PR workflow to reuse this
+
+jobs:
+  # SECRET SCANNING - Trufflehog
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for trufflehog
+      
+      - name: Run Trufflehog
+        # PLACEHOLDER: Trufflehog scanning
+        run: echo "Trufflehog scan placeholder"
+      
+      - name: Upload Trufflehog Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trufflehog-results
+          path: trufflehog-results.json
+
+  # CODE QUALITY - Backend Unit Tests
+  backend-tests:
+    name: Backend Tests (.NET)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+      
+      - name: Restore Dependencies
+        working-directory: ./backend
+        run: dotnet restore
+      
+      - name: Run xUnit Tests
+        working-directory: ./backend
+        # PLACEHOLDER: dotnet test with coverage
+        run: echo "xUnit tests placeholder"
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/TestResults/
+
+  # CODE QUALITY - Frontend Unit Tests
+  frontend-tests:
+    name: Frontend Tests (Angular)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run Karma Tests
+        working-directory: ./frontend
+        # PLACEHOLDER: ng test with coverage
+        run: echo "Karma tests placeholder"
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: frontend/coverage/
+
+  # STATIC APPLICATION SECURITY TESTING - CodeQL
+  sast-codeql:
+    name: SAST - CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp, javascript
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+      
+      - name: Build Backend
+        working-directory: ./backend
+        # PLACEHOLDER: dotnet build
+        run: echo "Build backend placeholder"
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # LINTING - Code Style Checks
+  lint-backend:
+    name: Lint - .NET (dotnet format)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+      
+      - name: Check Code Formatting
+        working-directory: ./backend
+        # PLACEHOLDER: dotnet format --verify-no-changes
+        run: echo "dotnet format placeholder"
+
+  lint-frontend:
+    name: Lint - Angular (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run ESLint
+        working-directory: ./frontend
+        # PLACEHOLDER: npm run lint
+        run: echo "ESLint placeholder"
+
+  # DEPENDENCY SCANNING - GitHub Dependabot
+  dependency-check:
+    name: Dependency Scanning - Dependabot Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for Dependabot Alerts
+        # PLACEHOLDER: gh api check or fail if alerts exist
+        run: echo "Dependabot check placeholder"
+
+  # INFRASTRUCTURE VALIDATION - Terraform
+  terraform-validation:
+    name: Infrastructure Validation - Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+      
+      - name: Terraform Format Check
+        run: terraform fmt -check
+      
+      - name: Terraform Init
+        # PLACEHOLDER: terraform init
+        run: echo "terraform init placeholder"
+      
+      - name: Terraform Validate
+        run: terraform validate
+      
+      - name: Terraform Plan
+        # PLACEHOLDER: terraform plan (preview only)
+        run: echo "terraform plan placeholder"
+
+  # INFRASTRUCTURE SECURITY SCANNING - Trivy on Terraform
+  terraform-security-scan:
+    name: Infrastructure Security - Trivy (Terraform)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy Config Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: './terraform'
+          format: 'sarif'
+          output: 'trivy-terraform-results.sarif'
+      
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-terraform-results.sarif'
+      
+      - name: Upload Trivy Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-terraform-report
+          path: trivy-terraform-results.sarif
