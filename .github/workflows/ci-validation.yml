@@ -15,11 +15,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for trufflehog
-      
+          fetch-depth: 0  # Full history
+
       - name: Run Trufflehog
-        # PLACEHOLDER: Trufflehog scanning
-        run: echo "Trufflehog scan placeholder"
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
       
       - name: Upload Trufflehog Results
         if: always()
@@ -42,11 +46,11 @@ jobs:
           dotnet-version: '8.x'
       
       - name: Restore Dependencies
-        working-directory: ./backend
+        working-directory: ./finance_tracker.backend
         run: dotnet restore
       
       - name: Run xUnit Tests
-        working-directory: ./backend
+        working-directory: ./finance_tracker.backend
         # PLACEHOLDER: dotnet test with coverage
         run: echo "xUnit tests placeholder"
       
@@ -55,36 +59,36 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
-          path: backend/TestResults/
+          path: finance_traacker.backend/TestResults/
 
   # CODE QUALITY - Frontend Unit Tests
-  frontend-tests:
-    name: Frontend Tests (Angular)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-      
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Run Karma Tests
-        working-directory: ./frontend
-        # PLACEHOLDER: ng test with coverage
-        run: echo "Karma tests placeholder"
-      
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-test-results
-          path: frontend/coverage/
+  #frontend-tests:
+  #  name: Frontend Tests (Angular)
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout code
+  #      uses: actions/checkout@v4
+  #    
+  #    - name: Setup Node.js
+  #      uses: actions/setup-node@v4
+  #      with:
+  #        node-version: '20.x'
+  #    
+  #    - name: Install Dependencies
+  #      working-directory: ./finance_tracker.frontend
+  #      run: npm ci
+  #    
+  #    - name: Run Karma Tests
+  #      working-directory: ./finance_tracker.frontend
+  #      # PLACEHOLDER: ng test with coverage
+  #      run: echo "Karma tests placeholder"
+  #    
+  #    - name: Upload Test Results
+  #      if: always()
+  #      uses: actions/upload-artifact@v4
+  #      with:
+  #        name: frontend-test-results
+  #        path: finance_tracker.frontend/coverage/
 
   # STATIC APPLICATION SECURITY TESTING - CodeQL
   sast-codeql:
@@ -107,9 +111,10 @@ jobs:
           dotnet-version: '8.x'
       
       - name: Build Backend
-        working-directory: ./backend
-        # PLACEHOLDER: dotnet build
-        run: echo "Build backend placeholder"
+        working-directory: ./finance_tracker.backend
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
       
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -128,30 +133,29 @@ jobs:
           dotnet-version: '8.x'
       
       - name: Check Code Formatting
-        working-directory: ./backend
-        # PLACEHOLDER: dotnet format --verify-no-changes
-        run: echo "dotnet format placeholder"
+        working-directory: ./finance_tracker.backend
+        run: dotnet format --verify-no-changes --verbosity diagnostic
 
-  lint-frontend:
-    name: Lint - Angular (ESLint)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-      
-      - name: Install Dependencies
-        working-directory: ./frontend
-        run: npm ci
-      
-      - name: Run ESLint
-        working-directory: ./frontend
-        # PLACEHOLDER: npm run lint
-        run: echo "ESLint placeholder"
+  #lint-frontend:
+  #  name: Lint - Angular (ESLint)
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout code
+  #      uses: actions/checkout@v4
+  #    
+  #    - name: Setup Node.js
+  #      uses: actions/setup-node@v4
+  #      with:
+  #        node-version: '20.x'
+  #    
+  #    - name: Install Dependencies
+  #      working-directory: ./finance_tracker.frontend
+  #      run: npm ci
+  #    
+  #    - name: Run ESLint
+  #      working-directory: ./finance_tracker.frontend
+  #      # PLACEHOLDER: npm run lint
+  #      run: echo "ESLint placeholder"
 
   # DEPENDENCY SCANNING - GitHub Dependabot
   dependency-check:
@@ -161,9 +165,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Check for Dependabot Alerts
-        # PLACEHOLDER: gh api check or fail if alerts exist
-        run: echo "Dependabot check placeholder"
+      - name: Check for Dependabot Alerts (.NET)
+        working-directory: ./finance_tracker.backend
+        run: dotnet list package --vulnerable --include-transitive
+
+      #- name: Check for Dependabot Alerts (Angular)
+      #  working-directory: ./finance_tracker.frontend
+      #  run: ADDME  
 
   # INFRASTRUCTURE VALIDATION - Terraform
   terraform-validation:
@@ -176,24 +184,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Setup Terraform
+      - name: Setup Terraform 
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.6.0
-      
+          terraform_version: 1.14.0
+
       - name: Terraform Format Check
         run: terraform fmt -check
       
       - name: Terraform Init
-        # PLACEHOLDER: terraform init
-        run: echo "terraform init placeholder"
+        run: terraform init
       
       - name: Terraform Validate
         run: terraform validate
-      
-      - name: Terraform Plan
-        # PLACEHOLDER: terraform plan (preview only)
-        run: echo "terraform plan placeholder"
 
   # INFRASTRUCTURE SECURITY SCANNING - Trivy on Terraform
   terraform-security-scan:
