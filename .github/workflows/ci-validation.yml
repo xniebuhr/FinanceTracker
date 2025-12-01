@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
-          path: finance_traacker.backend/TestResults/
+          path: finance_tracker.backend/TestResults/
 
   # CODE QUALITY - Frontend Unit Tests
   #frontend-tests:
