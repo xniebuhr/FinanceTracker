@@ -1,7 +1,7 @@
 # Configure Terraform and Azure Provider
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -34,10 +34,10 @@ resource "azurerm_subnet" "app" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.1.0/24"]
-  
+
   delegation {
     name = "app-service-delegation"
-    
+
     service_delegation {
       name    = "Microsoft.Web/serverFarms"
       actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
@@ -61,10 +61,10 @@ resource "azurerm_mssql_server" "main" {
   version                      = "12.0"
   administrator_login          = var.sql_admin_username
   administrator_login_password = var.sql_admin_password
-  
+
   # Public access disabled (you turned this off manually)
   public_network_access_enabled = false
-  
+
   # Minimum TLS version for security
   minimum_tls_version = "1.2"
 
@@ -82,10 +82,10 @@ resource "azurerm_mssql_database" "main" {
 
   # Specify local storage otherwise terraform apply fails
   storage_account_type = "Local"
-  
+
   # Payment tier
   sku_name = "GP_S_Gen5_2"
-  
+
   # Backup retention
   max_size_gb = 32
 }
@@ -107,10 +107,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "sql" {
 
 # Private Endpoint for SQL Server
 resource "azurerm_private_endpoint" "sql" {
-  name                = "sql-private-endpoint"
-  location            = var.resources_location
-  resource_group_name = azurerm_resource_group.main.name
-  subnet_id           = azurerm_subnet.db.id
+  name                          = "sql-private-endpoint"
+  location                      = var.resources_location
+  resource_group_name           = azurerm_resource_group.main.name
+  subnet_id                     = azurerm_subnet.db.id
   custom_network_interface_name = "sql-private-endpoint-nic"
 
   private_service_connection {

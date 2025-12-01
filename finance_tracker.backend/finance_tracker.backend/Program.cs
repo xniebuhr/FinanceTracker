@@ -63,7 +63,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Development", policy =>
-    {    
+    {
         policy.WithOrigins("http://localhost:4200") // Angular dev server
               .AllowAnyHeader()
               .AllowAnyMethod();
@@ -142,7 +142,7 @@ var app = builder.Build();
 // ============================
 
 if (app.Environment.IsDevelopment())
-{   
+{
     // Dev: Allow Angular dev server + Swagger UI
     app.UseCors("Development");
     app.UseSwagger();
