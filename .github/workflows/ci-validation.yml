@@ -167,9 +167,18 @@ jobs:
         working-directory: ./finance_tracker.backend
         run: dotnet list package --vulnerable --include-transitive
 
-      #- name: Check for Dependabot Alerts (Angular)
-      #  working-directory: ./finance_tracker.frontend
-      #  run: ADDME  
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies (Angular)
+        working-directory: ./finance_tracker.frontend
+        run: npm ci
+
+      - name: Check for Dependabot Alerts (Angular)
+        working-directory: ./finance_tracker.frontend
+        run: npm audit  
 
   # INFRASTRUCTURE VALIDATION - Terraform
   terraform-validation:

@@ -1,12 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TransactionService } from '../../services/transaction.service';
 import { Transaction } from '../../models/transaction.model'
 
 @Component({
   selector: 'app-transaction-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './transaction-list.component.html',
   styleUrls: ['./transaction-list.component.css']
 })

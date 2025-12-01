@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { NgForm } from '@angular/forms';
 import { TransactionService } from '../../services/transaction.service';
@@ -8,7 +8,7 @@ import { Transaction } from '../../models/transaction.model'
 @Component({
   selector: 'app-transaction-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './transaction-form.component.html'
 })
 export class TransactionFormComponent {

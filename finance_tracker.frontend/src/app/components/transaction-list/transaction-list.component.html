@@ -3,19 +3,26 @@
   <button (click)="toggleList()">
     {{ showList ? 'Hide Transactions' : 'Show Transactions' }}
   </button>
-  
-  <div *ngIf="showList">
-    <div *ngIf="!hasLoaded">
-      Loading transactions...
+
+  @if (showList) {
+    <div>
+      @if (!hasLoaded) {
+        <div>
+          Loading transactions...
+        </div>
+      }
+      @if (hasLoaded) {
+        <ul>
+          @for (transaction of transactions; track transaction) {
+            <li>
+              <strong>{{ transaction.description }}</strong>
+              - ${{ transaction.amount }}
+              <em>({{ transaction.category }})</em>
+              <button (click)="deleteTransaction(transaction.id)">Delete</button>
+            </li>
+          }
+        </ul>
+      }
     </div>
-    
-    <ul *ngIf="hasLoaded">
-      <li *ngFor="let transaction of transactions">
-        <strong>{{ transaction.description }}</strong>  
-        - ${{ transaction.amount }}  
-        <em>({{ transaction.category }})</em>
-        <button (click)="deleteTransaction(transaction.id)">Delete</button>
-      </li>
-    </ul>
-  </div>
+  }
 </div>
