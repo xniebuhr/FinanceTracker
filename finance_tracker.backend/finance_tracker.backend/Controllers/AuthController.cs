@@ -142,7 +142,7 @@ namespace finance_tracker.backend.Controllers
                                               .ToList()
                 });
             }
-            
+
             // Find user by email or username
             ApplicationUser? user = null;
             if (!string.IsNullOrWhiteSpace(dto.Email))
@@ -159,10 +159,10 @@ namespace finance_tracker.backend.Controllers
                     Message = "Invalid credentials"
                 });
             }
-            
+
             // Check if the password is correct
             var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
-            
+
             // Send error if login fails
             if (!result.Succeeded)
                 return Unauthorized(new ApiResponseDto<object>
@@ -271,7 +271,7 @@ namespace finance_tracker.backend.Controllers
 
             // Attempt to reset password
             var resetResult = await _userManager.ResetPasswordAsync(user, dto.ResetToken, dto.NewPassword);
-            
+
             // Send error if reset fails
             if (!resetResult.Succeeded)
             {
@@ -313,7 +313,7 @@ namespace finance_tracker.backend.Controllers
 
             // Find user by ID
             var user = await _userManager.FindByIdAsync(dto.Id);
-            
+
             // User not found
             if (user == null)
             {
@@ -375,7 +375,7 @@ namespace finance_tracker.backend.Controllers
 
             // Look up user in database
             var user = await _userManager.FindByIdAsync(userId);
-            
+
             // User not found
             if (user == null)
             {
@@ -389,7 +389,7 @@ namespace finance_tracker.backend.Controllers
 
             // Attempt to delete user
             var result = await _userManager.DeleteAsync(user);
-            
+
             // If deletion fails, send error response
             if (!result.Succeeded)
             {

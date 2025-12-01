@@ -1,0 +1,17 @@
+repos:
+  # .NET Code Formatting
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: .NET Code Format
+        entry: bash -c 'cd finance_tracker.backend && dotnet format'
+        language: system
+        pass_filenames: false
+  
+  # Terraform Formatting
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.104.0
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+        files: \.tf$

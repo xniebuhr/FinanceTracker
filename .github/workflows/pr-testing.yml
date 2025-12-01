@@ -1,0 +1,208 @@
+# name: PR - Full Testing
+
+# # Runs on pull requests targeting main branch
+# on:
+#   pull_request:
+#     branches: [main]
+
+# jobs:
+#   # Re-run all CI validations
+#   run-ci-validations:
+#     name: Run CI Validations
+#     uses: ./.github/workflows/ci-validation.yml
+
+#   # CONTAINERIZATION - Build Docker Image
+#   build-container:
+#     name: Build Docker Container
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Build Docker Image
+#         # PLACEHOLDER: docker build -t backend:pr .
+#         run: echo "Docker build placeholder"
+      
+#       - name: Save Docker Image as Artifact
+#         # PLACEHOLDER: docker save | gzip > image.tar.gz
+#         run: echo "Save image placeholder"
+      
+#       - name: Upload Container Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: backend-container
+#           path: backend-image.tar.gz
+
+#   # CONTAINER SECURITY SCANNING - Trivy
+#   container-security-scan:
+#     name: Container Security - Trivy
+#     runs-on: ubuntu-latest
+#     needs: build-container
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Download Container Artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: backend-container
+      
+#       - name: Load Docker Image
+#         # PLACEHOLDER: docker load < image.tar.gz
+#         run: echo "Load image placeholder"
+      
+#       - name: Run Trivy Container Scan
+#         uses: aquasecurity/trivy-action@master
+#         with:
+#           scan-type: 'image'
+#           image-ref: 'backend:pr'
+#           format: 'sarif'
+#           output: 'trivy-container-results.sarif'
+      
+#       - name: Upload Trivy Results
+#         uses: github/codeql-action/upload-sarif@v3
+#         with:
+#           sarif_file: 'trivy-container-results.sarif'
+      
+#       - name: Upload Trivy Report
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: trivy-container-report
+#           path: trivy-container-results.sarif
+
+#   # INTEGRATION TESTS - Containerized Backend
+#   integration-tests:
+#     name: Integration Tests
+#     runs-on: ubuntu-latest
+#     needs: build-container
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Download Container Artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: backend-container
+      
+#       - name: Load and Start Container
+#         # PLACEHOLDER: docker load and docker run
+#         run: echo "Start container placeholder"
+      
+#       - name: Run Integration Tests
+#         # PLACEHOLDER: Run tests against running container
+#         run: echo "Integration tests placeholder"
+      
+#       - name: Upload Test Results
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: integration-test-results
+#           path: test-results/
+      
+#       - name: Stop Container
+#         if: always()
+#         run: echo "Stop container placeholder"
+
+#   # E2E TESTS - Cypress
+#   e2e-tests:
+#     name: E2E Tests - Cypress
+#     runs-on: ubuntu-latest
+#     needs: build-container
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Download Container Artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: backend-container
+      
+#       - name: Setup Test Environment
+#         # PLACEHOLDER: Start backend + frontend containers
+#         run: echo "Setup E2E environment placeholder"
+      
+#       - name: Run Cypress Tests
+#         # PLACEHOLDER: npx cypress run
+#         run: echo "Cypress tests placeholder"
+      
+#       - name: Upload Cypress Results
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: cypress-results
+#           path: |
+#             cypress/videos/
+#             cypress/screenshots/
+      
+#       - name: Teardown Test Environment
+#         if: always()
+#         run: echo "Teardown placeholder"
+
+#   # DYNAMIC APPLICATION SECURITY TESTING - OWASP ZAP
+#   dast-owasp-zap:
+#     name: DAST - OWASP ZAP
+#     runs-on: ubuntu-latest
+#     needs: build-container
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Download Container Artifact
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: backend-container
+      
+#       - name: Start Application
+#         # PLACEHOLDER: docker run -d backend:pr
+#         run: echo "Start app placeholder"
+      
+#       - name: Run OWASP ZAP Scan
+#         # PLACEHOLDER: ZAP baseline or full scan
+#         run: echo "OWASP ZAP placeholder"
+      
+#       - name: Upload ZAP Results
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: zap-scan-results
+#           path: zap-report.html
+      
+#       - name: Stop Application
+#         if: always()
+#         run: echo "Stop app placeholder"
+
+#   # PREVIEW CHANGES - Infrastructure & Database
+#   preview-changes:
+#     name: Preview Changes - Infrastructure & Database
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+      
+#       - name: Setup .NET
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           dotnet-version: '8.x'
+      
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+      
+#       - name: Generate EF Migration Bundle
+#         working-directory: ./backend
+#         # PLACEHOLDER: dotnet ef migrations bundle (don't apply)
+#         run: echo "EF migration bundle placeholder"
+      
+#       - name: Terraform Init
+#         working-directory: ./terraform
+#         # PLACEHOLDER: terraform init
+#         run: echo "terraform init placeholder"
+      
+#       - name: Terraform Plan
+#         working-directory: ./terraform
+#         # PLACEHOLDER: terraform plan -out=tfplan
+#         run: echo "terraform plan placeholder"
+      
+#       - name: Comment PR with Changes
+#         # PLACEHOLDER: Post terraform plan & migration info to PR
+#         run: echo "PR comment placeholder"

@@ -7,7 +7,7 @@
         public string Username { get; set; }
 
         public string FirstName { get; set; }
-        
+
         public string AccessToken { get; set; }
 
         public DateTime ExpiresAt { get; set; }

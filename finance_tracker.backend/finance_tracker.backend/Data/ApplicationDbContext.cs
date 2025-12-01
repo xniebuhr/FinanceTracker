@@ -8,7 +8,7 @@ namespace finance_tracker.backend.Data
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) {}
+            : base(options) { }
 
         public DbSet<Transaction> Transactions { get; set; }
 
@@ -26,7 +26,7 @@ namespace finance_tracker.backend.Data
 
             builder.Entity<Transaction>()
                 .Property(t => t.Amount)
-                .HasPrecision(18,2);
+                .HasPrecision(18, 2);
 
             builder.Entity<Transaction>()
                 .HasOne(t => t.ApplicationUser)

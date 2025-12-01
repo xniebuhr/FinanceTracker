@@ -33,7 +33,7 @@ namespace finance_tracker.backend.Controllers
 
             // Look up user in database
             var user = await _userManager.FindByIdAsync(userId);
-            
+
             // User not found
             if (user == null)
             {
@@ -87,7 +87,7 @@ namespace finance_tracker.backend.Controllers
 
             // Look up user in database
             var user = await _userManager.FindByIdAsync(userId);
-            
+
             // User not found
             if (user == null)
             {
@@ -106,7 +106,7 @@ namespace finance_tracker.backend.Controllers
             {
                 // Check for duplicate username
                 var existingUser = await _userManager.FindByNameAsync(dto.Username);
-                
+
                 // Send error if username is already in use
                 if (existingUser != null && existingUser.Id != user.Id)
                 {
@@ -130,7 +130,7 @@ namespace finance_tracker.backend.Controllers
 
             // Save changes
             var result = await _userManager.UpdateAsync(user);
-            
+
             // Send error if saving failed
             if (!result.Succeeded)
             {
@@ -184,7 +184,7 @@ namespace finance_tracker.backend.Controllers
 
             // Look up user in database
             var user = await _userManager.FindByIdAsync(userId);
-            
+
             // User not found
             if (user == null)
             {
@@ -198,7 +198,7 @@ namespace finance_tracker.backend.Controllers
 
             // Attempt to change password
             var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
-            
+
             // Send error if password change failed
             if (!result.Succeeded)
             {
