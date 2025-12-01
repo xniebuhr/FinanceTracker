@@ -8,6 +8,14 @@ terraform {
       version = "~> 3.0"
     }
   }
+
+  # Backend configuration for remote state
+  backend "azurerm" {
+    resource_group_name  = "tf-state-rg"
+    storage_account_name = "xnfinancetfstate"
+    container_name       = "tfstate"
+    key                  = "finance-tracker.tfstate"
+  }
 }
 
 provider "azurerm" {

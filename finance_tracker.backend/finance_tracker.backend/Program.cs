@@ -1,14 +1,15 @@
+using DotNetEnv;
 using finance_tracker.backend.Data;
 using finance_tracker.backend.Models.Auth;
 using finance_tracker.backend.Models.Users;
 using finance_tracker.backend.Services.Auth;
-using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -123,6 +124,27 @@ builder.Services.AddAuthentication(
     });
 
 // ============================
+// Add rate limiting
+// ============================
+
+// Configure rate limiting middleware
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+// ============================
 // Add controllers, Swagger, and authorization
 // ============================
 
@@ -157,6 +179,9 @@ else
 
 // Always use HTTPS
 app.UseHttpsRedirection();
+
+// Enable rate limiting
+app.UseRateLimiter();
 
 // Enable authentication & authorization
 app.UseAuthentication();
