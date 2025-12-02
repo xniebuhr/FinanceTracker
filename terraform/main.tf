@@ -98,6 +98,38 @@ resource "azurerm_mssql_database" "main" {
   max_size_gb = 32
 }
 
+# SQL Server Auditing
+resource "azurerm_mssql_server_extended_auditing_policy" "main" {
+  server_id                               = azurerm_mssql_server.main.id
+  storage_endpoint                        = azurerm_storage_account.audit_logs.primary_blob_endpoint
+  storage_account_access_key              = azurerm_storage_account.audit_logs.primary_access_key
+  storage_account_access_key_is_secondary = false
+  retention_in_days                       = 30
+}
+
+# Storage Account for Audit Logs
+resource "azurerm_storage_account" "audit_logs" {
+  name                     = "sqlaudit${random_string.audit_suffix.result}"
+  resource_group_name      = azurerm_resource_group.main.name
+  location                 = var.resources_location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  # Enable blob soft delete for audit log protection
+  blob_properties {
+    delete_retention_policy {
+      days = 7
+    }
+  }
+}
+
+# Random suffix for storage account
+resource "random_string" "audit_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
 # Private DNS Zone for SQL
 resource "azurerm_private_dns_zone" "sql" {
   name                = "privatelink.database.windows.net"
