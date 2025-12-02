@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "group:allNonMajor",
+    "group:angular"
+  ],
+  "schedule": [ "before 4am" ],
+  "timezone": "America/Chicago",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [ "minor", "patch", "pin", "digest" ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "matchPackagePatterns": [ "^@angular/" ],
+      "groupName": "Angular Firmware"
+    },
+    {
+      "matchPackagePatterns": [ "^System\\.", "^Microsoft\\.Extensions", "^Microsoft\\.AspNetCore" ],
+      "groupName": ".NET Core Framework"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true,
+    "labels": [ "security" ]
+  },
+  "ignoreTests": false
+}
