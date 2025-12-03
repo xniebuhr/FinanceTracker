@@ -5,16 +5,23 @@
     "group:allNonMajor"
   ],
   "dependencyDashboard": true,
+  "timezone": "America/Chicago",
+  "schedule": ["before 4am"],
+  "prCreation": "immediate",
   "enabledManagers": ["npm", "nuget"],
   "includePaths": ["**/*"],
   "ignorePaths": ["**/node_modules/**", "**/test/**"],
-  "timezone": "America/Chicago",
+  
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false
     },
     {
       "matchPackagePatterns": ["^@angular/"],
@@ -25,10 +32,13 @@
       "groupName": ".NET Core Framework"
     }
   ],
+  
   "vulnerabilityAlerts": {
     "enabled": true,
     "automerge": true,
-    "labels": ["security"]
+    "labels": ["security"],
+    "schedule": ["at any time"] 
   },
+  
   "ignoreTests": false
 }
