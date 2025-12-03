@@ -3,29 +3,31 @@
   "extends": [
     "config:base",
     "group:allNonMajor",
+    "group:angular"
   ],
-  "schedule": [ "before 4am" ],
+  "dependencyDashboard": true,
+  "printConfig": true,
+  "logLevel": "debug",
+  "enabledManagers": ["npm", "nuget"],
+  "includePaths": ["**/*"],
+  "ignorePaths": ["**/node_modules/**", "**/test/**"],
   "timezone": "America/Chicago",
   "packageRules": [
     {
-      "matchUpdateTypes": [ "minor", "patch", "pin", "digest" ],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
     },
     {
-      "matchPackagePatterns": [ "^@angular/" ],
-      "groupName": "Angular Firmware"
-    },
-    {
-      "matchPackagePatterns": [ "^System\\.", "^Microsoft\\.Extensions", "^Microsoft\\.AspNetCore" ],
+      "matchPackagePatterns": ["^System\\.", "^Microsoft\\.Extensions", "^Microsoft\\.AspNetCore"],
       "groupName": ".NET Core Framework"
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
     "automerge": true,
-    "labels": [ "security" ]
+    "labels": ["security"]
   },
   "ignoreTests": false
 }
