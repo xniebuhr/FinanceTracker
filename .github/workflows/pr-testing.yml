@@ -1,10 +1,10 @@
-# name: PR - Full Testing
+name: PR - Full Testing
 
-# # Runs on pull requests targeting main branch
-# on:
-#   pull_request:
-#     branches: [main]
-#     types: [opened, synchronize, reopened]
+# Runs on pull requests targeting main branch
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 # jobs:
 #   # Re-run all CI validations
