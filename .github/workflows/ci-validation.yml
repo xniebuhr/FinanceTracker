@@ -3,8 +3,7 @@ name: CI - Validation
 # Runs on every push to any branch
 on:
   push:
-    branches: ['**']
-    branches-ignore: ['main']
+    branches-ignore: ["main"]
   workflow_call:  # Allows PR workflow to reuse this
 
 jobs:
