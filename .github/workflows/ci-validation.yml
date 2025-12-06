@@ -2,9 +2,6 @@ name: CI - Validation
 
 # Runs on every push to any branch
 on:
-  pull_request:
-    branches: ["main"]
-    types: [opened, synchronize, reopened]
   push:
     branches-ignore: ["main"]
   workflow_call:  # Allows PR workflow to reuse this
