@@ -4,6 +4,7 @@ name: CI - Validation
 on:
   push:
     branches: ['**']
+    branches-ignore: ['main']
   workflow_call:  # Allows PR workflow to reuse this
 
 jobs:
