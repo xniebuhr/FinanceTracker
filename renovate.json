@@ -24,8 +24,7 @@
     },
     {
       "groupName": "Angular Packages",
-      "matchPackagePatterns": ["^@angular/"],
-      "allowedVersions": "<21.0.0"
+      "matchPackagePatterns": ["^@angular/"]
     },
     {
       "groupName": ".NET Core Framework",
@@ -34,6 +33,10 @@
         "^Microsoft\\.Extensions",
         "^Microsoft\\.AspNetCore"
       ]
+    },
+    {
+      "matchPackageNames": ["jasmine-core"],
+      "allowedVersions": "<6.0.0"
     }
   ],
   "vulnerabilityAlerts": {
