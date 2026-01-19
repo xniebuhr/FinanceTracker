@@ -4,65 +4,45 @@
     "config:recommended",
     "group:allNonMajor"
   ],
+  "ignoreUnstable": true,
+  "minimumReleaseAge": "7 days",
   "dependencyDashboard": true,
   "timezone": "America/Chicago",
-  "schedule": [
-    "before 4am"
-  ],
+  "schedule": ["before 4am"],
   "prCreation": "immediate",
-  "enabledManagers": [
-    "npm",
-    "nuget"
-  ],
-  "includePaths": [
-    "**/*"
-  ],
-  "ignorePaths": [
-    "**/node_modules/**",
-    "**/test/**"
-  ],
+  "enabledManagers": ["npm", "nuget"],
   "packageRules": [
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
     },
     {
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchUpdateTypes": ["major"],
       "automerge": false
     },
     {
-      "groupName": "Angular Firmware",
-      "matchPackageNames": [
-        "/^@angular//"
-      ]
+      "groupName": "Angular Packages",
+      "matchPackagePatterns": ["^@angular/"]
     },
     {
       "groupName": ".NET Core Framework",
-      "matchPackageNames": [
-        "/^System\\./",
-        "/^Microsoft\\.Extensions/",
-        "/^Microsoft\\.AspNetCore/"
+      "matchPackagePatterns": [
+        "^System\\.",
+        "^Microsoft\\.Extensions",
+        "^Microsoft\\.AspNetCore"
       ]
+    },
+    {
+      "matchPackageNames": ["jasmine-core"],
+      "allowedVersions": "<6.0.0"
     }
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
     "automerge": true,
-    "labels": [
-      "security"
-    ],
-    "schedule": [
-      "at any time"
-    ]
-  },
-  "ignoreTests": false
+    "labels": ["security"],
+    "schedule": ["at any time"]
+  }
 }
