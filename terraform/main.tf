@@ -191,3 +191,80 @@ resource "azurerm_subnet_network_security_group_association" "db" {
   subnet_id                 = azurerm_subnet.db.id
   network_security_group_id = azurerm_network_security_group.db.id
 }
+
+# Holds container images
+resource "azurerm_container_registry" "main" {
+  name                = "financetracker${random_string.audit_suffix.result}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  sku                 = "Basic"
+  admin_enabled       = false
+}
+
+# Service plan to manage app
+resource "azurerm_service_plan" "main" {
+  name                = "finance-tracker-plan"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  os_type             = "Linux"
+  sku_name            = "F1"
+}
+
+# Get my public IP so only I can access the app (for now)
+data "http" "my_public_ip" {
+  url = "https://ifconfig.me/ip"
+}
+
+# The actual App Service
+resource "azurerm_linux_web_app" "main" {
+  name                = "app-finance-tracker-${random_string.audit_suffix.result}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  service_plan_id     = azurerm_service_plan.main.id
+
+  enabled                       = true
+  public_network_access_enabled = true
+
+  # Turn on Managed Identity
+  identity {
+    type = "SystemAssigned"
+  }
+
+  site_config {
+    acr_use_managed_identity_credentials = true
+    always_on                            = false
+
+    # Placeholder image
+    application_stack {
+      docker_image_name   = "mcr.icrosoft.com/dotnet/aspnet:8.0"
+      docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
+    }
+
+    app_settings = {
+      "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+      "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
+    }
+
+    ip_restriction {
+      name       = "AllowMyHomeIP"
+      ip_address = "${chomp(data.http.my_public_ip.response_body)}/32"
+      action     = "Allow"
+      priority   = 100
+    }
+  }
+}
+
+# Allows app service to pull from contanier registry
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
+}
+
+# Link the DNS Zone to your VNet
+resource "azurerm_private_dns_zone_virtual_network_link" "app" {
+  name                  = "app-dns-link"
+  resource_group_name   = azurerm_resource_group.main.name
+  private_dns_zone_name = azurerm_private_dns_zone.app.name
+  virtual_network_id    = azurerm_virtual_network.main.id
+}

@@ -38,3 +38,9 @@ variable "sql_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "app_service_name" {
+  description = "Name of the web app"
+  type        = string
+  default     = "finance-tracker-app"
+}

@@ -17,3 +17,15 @@ output "private_endpoint_ip" {
   description = "Private IP address of the SQL Server"
   value       = azurerm_private_endpoint.sql.private_service_connection[0].private_ip_address
 }
+
+output "app_service_default_site_hostname" {
+  value = azurerm_linux_web_app.main.default_hostname
+}
+
+output "app_private_ip" {
+  value = azurerm_private_endpoint.app.private_service_connection[0].private_ip_address
+}
+
+output "acr_login_server" {
+  value = azurerm_container_registry.main.login_server
+}
