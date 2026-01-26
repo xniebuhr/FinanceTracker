@@ -8,7 +8,7 @@ terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/*.tfstate.*
-terraform/terraform.tfvars
+terraform/*.tfvars
 
 # Other folders / files
 .vs/

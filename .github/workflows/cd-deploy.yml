@@ -10,6 +10,7 @@
 #   deploy-infrastructure:
 #     name: Deploy Infrastructure - Terraform
 #     runs-on: ubuntu-latest
+#     environment: ${{ (github.actor == 'renovate[bot]') && 'Production-Auto' || 'Production' }}
 #     defaults:
 #       run:
 #         working-directory: ./terraform
@@ -27,8 +28,12 @@
 #         run: echo "terraform init placeholder"
       
 #       - name: Terraform Apply
-#         # PLACEHOLDER: terraform apply -auto-approve
-#         run: echo "terraform apply placeholder"
+#         run: terraform apply -auto-approve
+#         env:
+#           AZURE_CLIENT_ID: ${{ secrets.AZURE_CILENT_ID }}
+#           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+#           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+#           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
 #   # DEPLOY DATABASE - EF Migrations
 #   deploy-database:
