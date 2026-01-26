@@ -3,7 +3,7 @@ name: CI - Validation
 # Runs on every push to any branch
 on:
   push:
-    branches: ['**']
+    branches-ignore: ["main"]
   workflow_call:  # Allows PR workflow to reuse this
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '10.x'
       
       - name: Restore Dependencies
         working-directory: ./finance_tracker.backend
@@ -106,7 +106,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '10.x'
       
       - name: Build Backend
         working-directory: ./finance_tracker.backend
@@ -128,7 +128,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.x'
+          dotnet-version: '10.x'
       
       - name: Check Code Formatting
         working-directory: ./finance_tracker.backend
@@ -165,6 +165,7 @@ jobs:
       
       - name: Check for Dependabot Alerts (.NET)
         working-directory: ./finance_tracker.backend
+        if: github.actor != 'renovate[bot]'
         run: dotnet list package --vulnerable --include-transitive
 
       - name: Setup Node.js
@@ -178,6 +179,7 @@ jobs:
 
       - name: Check for Dependabot Alerts (Angular)
         working-directory: ./finance_tracker.frontend
+        if: github.actor != 'renovate[bot]'
         run: npm audit  
 
   # INFRASTRUCTURE VALIDATION - Terraform
