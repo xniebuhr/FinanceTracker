@@ -7,6 +7,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 
   # Backend configuration for remote state
@@ -42,15 +46,6 @@ resource "azurerm_subnet" "app" {
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.1.0/24"]
-
-  delegation {
-    name = "app-service-delegation"
-
-    service_delegation {
-      name    = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-    }
-  }
 }
 
 # Database Subnet (for private endpoint)
@@ -71,7 +66,7 @@ resource "azurerm_mssql_server" "main" {
   administrator_login_password = var.sql_admin_password
 
   # Public access disabled (you turned this off manually)
-  public_network_access_enabled = false
+  public_network_access_enabled = true
 
   # Minimum TLS version for security
   minimum_tls_version = "1.2"
@@ -96,6 +91,13 @@ resource "azurerm_mssql_database" "main" {
 
   # Backup retention
   max_size_gb = 32
+}
+
+resource "azurerm_mssql_firewall_rule" "allow_azure_services" {
+  name             = "AllowAzureServices"
+  server_id        = azurerm_mssql_server.main.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
 }
 
 # SQL Server Auditing
@@ -194,18 +196,18 @@ resource "azurerm_subnet_network_security_group_association" "db" {
 
 # Holds container images
 resource "azurerm_container_registry" "main" {
-  name                = "financetracker${random_string.audit_suffix.result}"
+  name                = "financetracker${random_string.acr_suffix.result}"
   resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  location            = var.resources_location
   sku                 = "Basic"
-  admin_enabled       = false
+  admin_enabled       = true
 }
 
 # Service plan to manage app
 resource "azurerm_service_plan" "main" {
   name                = "finance-tracker-plan"
   resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  location            = var.resources_location
   os_type             = "Linux"
   sku_name            = "F1"
 }
@@ -217,9 +219,9 @@ data "http" "my_public_ip" {
 
 # The actual App Service
 resource "azurerm_linux_web_app" "main" {
-  name                = "app-finance-tracker-${random_string.audit_suffix.result}"
+  name                = "app-finance-tracker-${random_string.app_suffix.result}"
   resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  location            = var.resources_location
   service_plan_id     = azurerm_service_plan.main.id
 
   enabled                       = true
@@ -230,19 +232,18 @@ resource "azurerm_linux_web_app" "main" {
     type = "SystemAssigned"
   }
 
+  app_settings = {
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+    "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
+  }
+
   site_config {
-    acr_use_managed_identity_credentials = true
-    always_on                            = false
+    always_on = false
 
     # Placeholder image
     application_stack {
-      docker_image_name   = "mcr.icrosoft.com/dotnet/aspnet:8.0"
+      docker_image_name   = "mcr.microsoft.com/dotnet/aspnet:8.0"
       docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
-    }
-
-    app_settings = {
-      "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
-      "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
     }
 
     ip_restriction {
@@ -254,6 +255,8 @@ resource "azurerm_linux_web_app" "main" {
   }
 }
 
+data "azurerm_client_config" "current" {}
+
 # Allows app service to pull from contanier registry
 resource "azurerm_role_assignment" "acr_pull" {
   scope                = azurerm_container_registry.main.id
@@ -261,10 +264,65 @@ resource "azurerm_role_assignment" "acr_pull" {
   principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
 }
 
-# Link the DNS Zone to your VNet
-resource "azurerm_private_dns_zone_virtual_network_link" "app" {
-  name                  = "app-dns-link"
-  resource_group_name   = azurerm_resource_group.main.name
-  private_dns_zone_name = azurerm_private_dns_zone.app.name
-  virtual_network_id    = azurerm_virtual_network.main.id
+resource "azurerm_key_vault" "main" {
+  name                = "kv-finance-${random_string.kv_suffix.result}"
+  location            = var.resources_location
+  resource_group_name = azurerm_resource_group.main.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  sku_name            = "standard" # Cheap and perfect for students
+
+  purge_protection_enabled   = false
+  soft_delete_retention_days = 7
+
+  network_acls {
+    default_action = "Allow"
+    bypass         = "AzureServices"
+  }
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Purge",
+      "Recover"
+    ]
+  }
+}
+
+# Grant App Service access to Key Vault
+resource "azurerm_key_vault_access_policy" "app_service" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_web_app.main.identity[0].principal_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+}
+
+
+
+# Random suffixes
+resource "random_string" "acr_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+resource "random_string" "app_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+resource "random_string" "kv_suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }

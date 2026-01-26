@@ -18,14 +18,28 @@ output "private_endpoint_ip" {
   value       = azurerm_private_endpoint.sql.private_service_connection[0].private_ip_address
 }
 
-output "app_service_default_site_hostname" {
-  value = azurerm_linux_web_app.main.default_hostname
-}
-
-output "app_private_ip" {
-  value = azurerm_private_endpoint.app.private_service_connection[0].private_ip_address
-}
-
 output "acr_login_server" {
   value = azurerm_container_registry.main.login_server
+}
+
+output "acr_admin_username" {
+  description = "ACR admin username for Docker login"
+  value       = azurerm_container_registry.main.admin_username
+  sensitive   = true
+}
+
+output "acr_admin_password" {
+  description = "ACR admin password for Docker login"
+  value       = azurerm_container_registry.main.admin_password
+  sensitive   = true
+}
+
+output "key_vault_uri" {
+  description = "URI of the Key Vault"
+  value       = azurerm_key_vault.main.vault_uri
+}
+
+output "app_service_url" {
+  description = "Full HTTPS URL of the app"
+  value       = "https://${azurerm_linux_web_app.main.default_hostname}"
 }
