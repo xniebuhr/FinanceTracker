@@ -1,0 +1,21 @@
+services:
+  backend:
+    build:
+      context: ./finance_tracker.backend/finance_tracker.backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: ./finance_tracker.frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
