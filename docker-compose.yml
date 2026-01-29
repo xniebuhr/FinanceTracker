@@ -8,6 +8,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
+      - CORS_ALLOWED_ORIGINS=http://localhost:4200,http://frontend,https://app-finance-tracker-6n8mk7w3.azurewebsites.net
     depends_on:
       - frontend
 
