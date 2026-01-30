@@ -43,6 +43,7 @@
     "enabled": true,
     "automerge": true,
     "labels": ["security"],
-    "schedule": ["at any time"]
+    "schedule": ["at any time"],
+    "minimumReleaseAge": null
   }
 }
