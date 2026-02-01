@@ -185,6 +185,9 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Health endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
 // ============================
 // Configure middleware pipeline
 // ============================
