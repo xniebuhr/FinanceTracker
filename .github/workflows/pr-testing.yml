@@ -12,7 +12,7 @@ jobs:
     name: Run CI Validations
     uses: ./.github/workflows/ci-validation.yml
 
-  # CONTAINERIZATION - Build Docker Images
+  # CONTAINERIZATION - Build Docker Images via Compose
   build-containers:
     name: Build Docker Containers
     runs-on: ubuntu-latest
@@ -23,15 +23,10 @@ jobs:
       - name: Build with Docker Compose
         run: docker compose build
       
-      - name: Tag Images
-        run: |
-          docker tag finance-tracker-backend:latest finance-tracker-backend:pr
-          docker tag finance-tracker-frontend:latest finance-tracker-frontend:pr
-      
       - name: Save Docker Images
         run: |
-          docker save finance-tracker-backend:pr | gzip > backend-image.tar.gz
-          docker save finance-tracker-frontend:pr | gzip > frontend-image.tar.gz
+          docker save finance-tracker-backend:latest | gzip > backend-image.tar.gz
+          docker save finance-tracker-frontend:latest | gzip > frontend-image.tar.gz
       
       - name: Upload Container Artifacts
         uses: actions/upload-artifact@v4
@@ -42,98 +37,279 @@ jobs:
             frontend-image.tar.gz
 
   # CONTAINER SECURITY SCANNING - Trivy
+  # Depends on: build-containers (needs images to scan)
   container-security-scan:
     name: Container Security - Trivy
     runs-on: ubuntu-latest
-    needs: build-container
+    needs: build-containers
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Download Container Artifact
+      - name: Download Container Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: backend-container
+          name: app-containers
       
-      - name: Load Docker Image
-        # PLACEHOLDER: docker load < image.tar.gz
-        run: echo "Load image placeholder"
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
       
-      - name: Run Trivy Container Scan
+      - name: Scan Backend Image
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'image'
-          image-ref: 'backend:pr'
+          image-ref: 'finance-tracker-backend:latest'
           format: 'sarif'
-          output: 'trivy-container-results.sarif'
+          output: 'trivy-backend-results.sarif'
       
-      - name: Upload Trivy Results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Scan Frontend Image
+        uses: aquasecurity/trivy-action@master
         with:
-          sarif_file: 'trivy-container-results.sarif'
+          scan-type: 'image'
+          image-ref: 'finance-tracker-frontend:latest'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
       
-      - name: Upload Trivy Report
+      - name: Upload Backend Trivy Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+          category: 'trivy-backend'
+      
+      - name: Upload Frontend Trivy Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend'
+      
+      - name: Upload Trivy Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-container-report
-          path: trivy-container-results.sarif
+          name: trivy-container-reports
+          path: |
+            trivy-backend-results.sarif
+            trivy-frontend-results.sarif
 
-#   # INTEGRATION TESTS - Containerized Backend
+  # DYNAMIC APPLICATION SECURITY TESTING - OWASP ZAP
+  # Depends on: build-containers (needs running app to scan)
+  dast-owasp-zap:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: build-containers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Container Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-containers
+      
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
+      
+      - name: Start Application
+        env:
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: docker compose up -d
+      
+      - name: Wait for Backend Health Check
+        run: |
+          echo "Waiting for backend to be ready..."
+          timeout 60 bash -c 'until curl -f http://localhost:5000/health; do sleep 2; done'
+          echo "Backend is ready!"
+      
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:5000'
+          cmd_options: '-a'
+      
+      - name: Upload ZAP Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-results
+          path: report_html.html
+      
+      - name: Stop Application
+        if: always()
+        run: docker compose down
+
+  # INTEGRATION TESTS - Containerized Backend
+  # Depends on: build-containers (needs running backend)
 #   integration-tests:
 #     name: Integration Tests
 #     runs-on: ubuntu-latest
 #     needs: build-containers
 #     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 #       
+#       - name: Setup .NET
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           dotnet-version: '10.x'
+#       
+#       - name: Download Container Artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: app-containers
+#       
+#       - name: Load Docker Images
+#         run: |
+#           docker load < backend-image.tar.gz
+#           docker load < frontend-image.tar.gz
+#       
+#       - name: Start Application
+#         env:
+#           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+#           JWT_KEY: ${{ secrets.JWT_KEY }}
+#         run: docker compose up -d
+#       
+#       - name: Wait for Backend Health Check
+#         run: |
+#           echo "Waiting for backend to be ready..."
+#           timeout 60 bash -c 'until curl -f http://localhost:5000/health; do sleep 2; done'
+#           echo "Backend is ready!"
+#       
+#       - name: Run Integration Tests
+#         working-directory: ./finance_tracker.backend.Tests
+#         run: dotnet test --filter "Category=Integration"
+#       
+#       - name: Upload Test Results
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: integration-test-results
+#           path: finance_tracker.backend.Tests/TestResults/
+#       
+#       - name: Stop Application
+#         if: always()
+#         run: docker compose down
 
-#   # E2E TESTS - Cypress
+  # E2E TESTS - Cypress
+  # Depends on: build-containers (needs full stack running)
 #   e2e-tests:
 #     name: E2E Tests - Cypress
 #     runs-on: ubuntu-latest
-#     needs: build-container
+#     needs: build-containers
 #     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 #       
-
-#   # DYNAMIC APPLICATION SECURITY TESTING - OWASP ZAP
-#   dast-owasp-zap:
-#     name: DAST - OWASP ZAP
-#     runs-on: ubuntu-latest
-#     needs: build-container
-#     steps:
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '20.x'
 #       
+#       - name: Download Container Artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: app-containers
+#       
+#       - name: Load Docker Images
+#         run: |
+#           docker load < backend-image.tar.gz
+#           docker load < frontend-image.tar.gz
+#       
+#       - name: Start Application
+#         env:
+#           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+#           JWT_KEY: ${{ secrets.JWT_KEY }}
+#         run: docker compose up -d
+#       
+#       - name: Wait for Frontend
+#         run: |
+#           echo "Waiting for frontend to be ready..."
+#           timeout 60 bash -c 'until curl -f http://localhost:4200; do sleep 2; done'
+#           echo "Frontend is ready!"
+#       
+#       - name: Install Cypress Dependencies
+#         working-directory: ./finance_tracker.frontend
+#         run: npm ci
+#       
+#       - name: Run Cypress Tests
+#         working-directory: ./finance_tracker.frontend
+#         run: npx cypress run --browser chrome --headless
+#       
+#       - name: Upload Cypress Results
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: cypress-results
+#           path: |
+#             finance_tracker.frontend/cypress/videos/
+#             finance_tracker.frontend/cypress/screenshots/
+#       
+#       - name: Stop Application
+#         if: always()
+#         run: docker compose down
 
   # PREVIEW CHANGES - Infrastructure & Database
-  preview-changes:
-    name: Preview Changes - Infrastructure & Database
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # preview-changes:
+  #   name: Preview Changes - Infrastructure & Database
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
       
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.x'
+  #     - name: Setup .NET
+  #       uses: actions/setup-dotnet@v4
+  #       with:
+  #         dotnet-version: '10.x'
       
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.14.0
       
-      - name: Generate EF Migration Bundle
-        working-directory: ./backend
-        # PLACEHOLDER: dotnet ef migrations bundle (don't apply)
-        run: echo "EF migration bundle placeholder"
+  #     - name: Azure Login
+  #       uses: azure/login@v1
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Terraform Init
-        working-directory: ./terraform
-        # PLACEHOLDER: terraform init
-        run: echo "terraform init placeholder"
+  #     - name: Generate EF Migration Bundle
+  #       working-directory: ./finance_tracker.backend
+  #       run: |
+  #         dotnet restore
+  #         dotnet ef migrations bundle --output /tmp/migrations.zip
       
-      - name: Terraform Plan
-        working-directory: ./terraform
-        # PLACEHOLDER: terraform plan -out=tfplan
-        run: echo "terraform plan placeholder"
+  #     - name: Terraform Init
+  #       working-directory: ./terraform
+  #       run: terraform init
       
-      - name: Comment PR with Changes
-        # PLACEHOLDER: Post terraform plan & migration info to PR
-        run: echo "PR comment placeholder"
+  #     - name: Terraform Plan
+  #       working-directory: ./terraform
+  #       run: |
+  #         terraform plan -input=false -out=tfplan 2>&1 | tee /tmp/terraform-plan.txt
+  #       env:
+  #         TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      
+  #     - name: Comment PR with Terraform Plan
+  #       uses: actions/github-script@v7
+  #       with:
+  #         github-token: ${{ secrets.GITHUB_TOKEN }}
+  #         script: |
+  #           const fs = require('fs');
+  #           const plan = fs.readFileSync('/tmp/terraform-plan.txt', 'utf8');
+  #           const body = `## Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+            
+  #           await github.rest.issues.createComment({
+  #             owner: context.repo.owner,
+  #             repo: context.repo.repo,
+  #             issue_number: context.payload.pull_request.number,
+  #             body: body
+  #           });
+      
+  #     - name: Upload Terraform Plan
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: terraform-plan
+  #         path: terraform/tfplan
