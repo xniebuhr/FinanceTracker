@@ -22,13 +22,6 @@ jobs:
         with:
           path: ./
           extra_args: --only-verified
-      
-      - name: Upload Trufflehog Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trufflehog-results
-          path: trufflehog-results.json
 
   # CODE QUALITY - Backend Unit Tests
   backend-tests:
@@ -99,7 +92,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: csharp, javascript
       
@@ -115,7 +108,7 @@ jobs:
           dotnet build --configuration Release --no-restore
       
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   # LINTING - Code Style Checks
   lint-backend:
