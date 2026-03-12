@@ -6,6 +6,6 @@ namespace finance_tracker.backend.DTOs.Auth.Password
     {
         [Required]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
     }
 }
