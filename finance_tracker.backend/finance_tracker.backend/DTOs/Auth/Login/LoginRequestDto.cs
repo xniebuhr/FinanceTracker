@@ -12,7 +12,7 @@ namespace finance_tracker.backend.DTOs.Auth.Login
 
         [Required]
         [MinLength(8)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

@@ -2,16 +2,16 @@
 {
     public class RegisterResponseDto
     {
-        public string Id { get; set; }
+        public required string Id { get; set; }
 
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
-        public string AccessToken { get; set; }
+        public required string AccessToken { get; set; }
 
-        public string RefreshToken { get; set; }
+        public required string RefreshToken { get; set; }
 
-        public DateTime ExpiresAt { get; set; }
+        public required DateTime ExpiresAt { get; set; }
     }
 }

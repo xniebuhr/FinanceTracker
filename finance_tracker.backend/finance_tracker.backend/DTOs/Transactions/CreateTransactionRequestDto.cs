@@ -6,22 +6,22 @@ namespace finance_tracker.backend.DTOs.Transactions
     public class CreateTransactionRequestDto : IValidatableObject
     {
         [Required]
-        public TransactionType Type { get; set; }
+        public required TransactionType Type { get; set; }
 
         [Required, MaxLength(100)]
-        public string Category { get; set; }
+        public required string Category { get; set; }
 
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be positive")]
-        public decimal Amount { get; set; }
+        public required decimal Amount { get; set; }
 
         [Required]
-        public DateTime TransactionDate { get; set; }
+        public required DateTime TransactionDate { get; set; }
 
         [MaxLength(500)]
         public string? Description { get; set; }
 
-        public bool IsRecurring { get; set; }
+        public required bool IsRecurring { get; set; }
 
         public RecurrenceInterval? Recurrence { get; set; }
 
