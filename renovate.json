@@ -11,6 +11,12 @@
   "schedule": ["before 4am"],
   "prCreation": "immediate",
   "enabledManagers": ["npm", "nuget"],
+  "constraints": {
+    "dotnet": "10.0"
+  },
+  "nuget": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
