@@ -8,6 +8,6 @@
 
         public T? Data { get; set; }
 
-        public required List<string> Errors { get; set; } = new();
+        public List<string> Errors { get; set; } = new();
     }
 }
