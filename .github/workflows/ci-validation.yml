@@ -44,42 +44,28 @@ jobs:
         working-directory: ./finance_tracker.backend
         # PLACEHOLDER: dotnet test with coverage
         run: echo "xUnit tests placeholder"
-      
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: finance_tracker.backend/TestResults/
 
   # CODE QUALITY - Frontend Unit Tests
-  #frontend-tests:
-  #  name: Frontend Tests (Angular)
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Checkout code
-  #      uses: actions/checkout@v4
-  #    
-  #    - name: Setup Node.js
-  #      uses: actions/setup-node@v4
-  #      with:
-  #        node-version: '24.x'
-  #    
-  #    - name: Install Dependencies
-  #      working-directory: ./finance_tracker.frontend
-  #      run: npm ci
-  #    
-  #    - name: Run Karma Tests
-  #      working-directory: ./finance_tracker.frontend
-  #      # PLACEHOLDER: ng test with coverage
-  #      run: echo "Karma tests placeholder"
-  #    
-  #    - name: Upload Test Results
-  #      if: always()
-  #      uses: actions/upload-artifact@v4
-  #      with:
-  #        name: frontend-test-results
-  #        path: finance_tracker.frontend/coverage/
+  frontend-tests:
+   name: Frontend Tests (Angular)
+   runs-on: ubuntu-latest
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v4
+     
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: '24.x'
+     
+     - name: Install Dependencies
+       working-directory: ./finance_tracker.frontend
+       run: npm ci
+     
+     - name: Run Karma Tests
+       working-directory: ./finance_tracker.frontend
+       # PLACEHOLDER: ng test with coverage
+       run: echo "Karma tests placeholder"
 
   # STATIC APPLICATION SECURITY TESTING - CodeQL
   sast-codeql:
@@ -110,7 +96,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
-  # LINTING - Code Style Checks
+  # LINTING - Backend Code Style Checks
   lint-backend:
     name: Lint - .NET
     runs-on: ubuntu-latest
@@ -127,26 +113,26 @@ jobs:
         working-directory: ./finance_tracker.backend
         run: dotnet format --verify-no-changes --verbosity diagnostic
 
-  #lint-frontend:
-  #  name: Lint - Angular
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - name: Checkout code
-  #      uses: actions/checkout@v4
-  #    
-  #    - name: Setup Node.js
-  #      uses: actions/setup-node@v4
-  #      with:
-  #        node-version: '24.x'
-  #    
-  #    - name: Install Dependencies
-  #      working-directory: ./finance_tracker.frontend
-  #      run: npm ci
-  #    
-  #    - name: Run ESLint
-  #      working-directory: ./finance_tracker.frontend
-  #      # PLACEHOLDER: npm run lint
-  #      run: echo "ESLint placeholder"
+  # LINTING - Backend Code Style Checks
+  lint-frontend:
+   name: Lint - Angular
+   runs-on: ubuntu-latest
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v4
+     
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: '24.x'
+     
+     - name: Install Dependencies
+       working-directory: ./finance_tracker.frontend
+       run: npm ci
+     
+     - name: Run ESLint
+       working-directory: ./finance_tracker.frontend
+       run: npm run lint
 
   # DEPENDENCY SCANNING - GitHub Dependabot
   dependency-check:
