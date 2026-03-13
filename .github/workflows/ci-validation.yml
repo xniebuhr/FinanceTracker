@@ -96,7 +96,7 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
 
-  # LINTING - Backend Code Style Checks
+  # FORMATTING - Backend Code Style Checks
   lint-backend:
     name: Lint - .NET
     runs-on: ubuntu-latest
@@ -113,26 +113,31 @@ jobs:
         working-directory: ./finance_tracker.backend
         run: dotnet format --verify-no-changes --verbosity diagnostic
 
-  # LINTING - Frontend Code Style Checks
+  # FORMATTING - Frontend Code Style Checks
   lint-frontend:
    name: Lint - Angular
    runs-on: ubuntu-latest
    steps:
-     - name: Checkout code
-       uses: actions/checkout@v4
-     
-     - name: Setup Node.js
-       uses: actions/setup-node@v4
-       with:
-         node-version: '24.x'
-     
-     - name: Install Dependencies
-       working-directory: ./finance_tracker.frontend
-       run: npm ci
-     
-     - name: Run ESLint
-       working-directory: ./finance_tracker.frontend
-       run: npm run lint
+     - uses: actions/checkout@v4
+     - name: Check Prettier
+       run: npx prettier --check "finance_tracker.frontend/src/**/*.{ts,html,scss}"
+
+  # LINTING - Global lint checker
+  global-lint:
+    name: Global Lint (Super-Linter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+      - name: Lint Code Base
+        uses: super-linter/super-linter@v7
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_CSHARP: true        # .NET check
+          VALIDATE_TYPESCRIPT_ES: true # Angular check
+          VALIDATE_TERRAFORM: true     # Terraform check
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # DEPENDENCY SCANNING - GitHub Dependabot
   dependency-check:
