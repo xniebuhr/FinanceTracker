@@ -113,7 +113,7 @@ jobs:
         working-directory: ./finance_tracker.backend
         run: dotnet format --verify-no-changes --verbosity diagnostic
 
-  # LINTING - Backend Code Style Checks
+  # LINTING - Frontend Code Style Checks
   lint-frontend:
    name: Lint - Angular
    runs-on: ubuntu-latest
