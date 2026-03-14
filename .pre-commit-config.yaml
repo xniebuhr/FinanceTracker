@@ -7,6 +7,7 @@ repos:
         entry: dotnet format finance_tracker.backend
         language: system
         pass_filenames: false
+        files: ^finance_tracker.backend/.*\.cs$
   
   # Angular Code Formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
