@@ -292,6 +292,68 @@ namespace finance_tracker.backend.Controllers
         }
 
         // ============================
+        // POST: api/auth/change-password
+        // Changes the currently authenticated user's password
+        // ============================
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto dto)
+        {
+            // 1. Validate input model
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponseDto<object>
+                {
+                    Success = false,
+                    Message = "Invalid input",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors)
+                                              .Select(e => e.ErrorMessage)
+                                              .ToList()
+                });
+            }
+
+            // Get current uID from JWT claims
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+
+            }
+
+            // Look up user
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new ApiResponseDto<object>
+                {
+                    Success = false,
+                    Message = "User not found"
+                });
+            }
+
+            // Attempt to change the password
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+
+            // Send error if change fails
+            if (!result.Succeeded)
+            {
+                return BadRequest(new ApiResponseDto<object>
+                {
+                    Success = false,
+                    Message = "Password change failed",
+                    Errors = result.Errors.Select(e => $"{e.Code}: {e.Description}").ToList()
+                });
+            }
+
+            // Return success response
+            return Ok(new ApiResponseDto<object>
+            {
+                Success = true,
+                Message = "Password changed successfully"
+            });
+        }
+
+        // ============================
         // POST: api/auth/refresh
         // Refreshes the access token using a valid refresh token
         // ============================

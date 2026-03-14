@@ -1,132 +1,187 @@
-# name: CD - Deploy to Production
+name: CD - Deploy to Production
 
-# # Runs when changes are merged to main
-# on:
-#   push:
-#     branches: [main]
+# Runs when changes are merged to main
+on:
+  push:
+    branches: [main]
 
-# jobs:
-#   # DEPLOY INFRASTRUCTURE - Terraform Apply
-#   deploy-infrastructure:
-#     name: Deploy Infrastructure - Terraform
-#     runs-on: ubuntu-latest
-#     environment: ${{ (github.actor == 'renovate[bot]') && 'Production-Auto' || 'Production' }}
-#     defaults:
-#       run:
-#         working-directory: ./terraform
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+jobs:
+  # DEPLOY INFRASTRUCTURE - Terraform Apply
+  deploy-infrastructure:
+    name: Deploy Infrastructure - Terraform
+    runs-on: ubuntu-latest
+    environment: ${{ (github.actor == 'renovate[bot]') && 'Production-Auto' || 'Production' }}
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Setup Terraform
-#         uses: hashicorp/setup-terraform@v3
-#         with:
-#           terraform_version: 1.6.0
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.0
       
-#       - name: Terraform Init
-#         # PLACEHOLDER: terraform init with backend config
-#         run: echo "terraform init placeholder"
+      - name: Terraform Init
+        run: terraform init
       
-#       - name: Terraform Apply
-#         run: terraform apply -auto-approve
-#         env:
-#           AZURE_CLIENT_ID: ${{ secrets.AZURE_CILENT_ID }}
-#           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-#           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-#           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CILENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-#   # DEPLOY DATABASE - EF Migrations
-#   deploy-database:
-#     name: Deploy Database - EF Migrations
-#     runs-on: ubuntu-latest
-#     needs: deploy-infrastructure
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # DEPLOY DATABASE - EF Migrations
+  deploy-database:
+    name: Deploy Database - EF Migrations
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Setup .NET
-#         uses: actions/setup-dotnet@v4
-#         with:
-#           dotnet-version: '8.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
       
-#       - name: Run EF Migrations
-#         working-directory: ./backend
-#         # PLACEHOLDER: Run migration bundle against production DB
-#         run: echo "EF migrations placeholder"
+      - name: Run EF Migrations
+        working-directory: ./finance_tracker.backend
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef migrations bundle --output ./migrate.exe --self-contained -r linux-x64
+          ./migrate.exe --connection "${{ secrets.DB_CONNECTION_STRING }}"
 
-#   # BUILD & PUSH CONTAINER - Docker to Azure Container Registry
-#   build-and-push-container:
-#     name: Build & Push Container - ACR
-#     runs-on: ubuntu-latest
-#     needs: deploy-database
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # BUILD & PUSH CONTAINER - Docker to Azure Container Registry
+  build-and-push-container:
+    name: Build & Push Container - ACR
+    runs-on: ubuntu-latest
+    needs: deploy-database
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Login to Azure Container Registry
-#         # PLACEHOLDER: docker login to ACR
-#         run: echo "ACR login placeholder"
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with: 
+          login-server: ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io 
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
       
-#       - name: Build Production Image
-#         # PLACEHOLDER: docker build with tags (commit SHA + latest)
-#         run: echo "Docker build placeholder"
-      
-#       - name: Container Security Scan - Trivy (Final Check)
-#         uses: aquasecurity/trivy-action@master
-#         with:
-#           scan-type: 'image'
-#           image-ref: 'your-acr.azurecr.io/backend:latest'
-#           format: 'table'
-      
-#       - name: Push to Azure Container Registry
-#         # PLACEHOLDER: docker push
-#         run: echo "Docker push placeholder"
+      - name: Build & Tag Images
+        run: |
+          # Backend
+          docker build -t ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:${{ github.sha }} -f ./finance_tracker.backend/Dockerfile ./finance_tracker.backend
+          docker tag ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:${{ github.sha }} ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:latest
+          
+          # Frontend
+          docker build -t ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:${{ github.sha }} -f ./finance_tracker.frontend/Dockerfile ./finance_tracker.frontend
+          docker tag ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:${{ github.sha }} ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:latest
 
-#   # DEPLOY APPLICATION - Azure App Service
-#   deploy-application:
-#     name: Deploy Application - App Service
-#     runs-on: ubuntu-latest
-#     needs: build-and-push-container
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-      
-#       - name: Login to Azure
-#         # PLACEHOLDER: az login with service principal
-#         run: echo "Azure login placeholder"
-      
-#       - name: Update App Service Container
-#         # PLACEHOLDER: az webapp config container set
-#         run: echo "Deploy to App Service placeholder"
-      
-#       - name: Wait for Deployment
-#         # PLACEHOLDER: Poll until healthy
-#         run: echo "Wait for deployment placeholder"
+      - name: Security Scan - Backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
-#   # SMOKE TESTS - Post-Deployment Validation
-#   smoke-tests:
-#     name: Smoke Tests - Health Checks
-#     runs-on: ubuntu-latest
-#     needs: deploy-application
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+      - name: Security Scan - Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
       
-#       - name: Health Check - API Endpoint
-#         # PLACEHOLDER: curl health endpoint, expect 200
-#         run: echo "Health check placeholder"
+      - name: Push to Azure Container Registry
+        run: |
+          docker push ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:${{ github.sha }}
+          docker push ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:latest
+          docker push ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:${{ github.sha }}
+          docker push ${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:latest
+
+  # DEPLOY APPLICATION - Azure App Service
+  deploy-application:
+    name: Deploy Application - App Service
+    runs-on: ubuntu-latest
+    needs: build-and-push-container
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Smoke Test - Basic API Call
-#         # PLACEHOLDER: Test a simple GET endpoint
-#         run: echo "API smoke test placeholder"
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       
-#       - name: Smoke Test - Database Connectivity
-#         # PLACEHOLDER: Test database connection
-#         run: echo "Database connectivity placeholder"
+      - name: Update Backend Container
+        run: |  
+          az webapp config container set \
+            --name "app-finance-tracker-backend" \
+            --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            --docker-custom-image-name "${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/backend:latest"
+
+      - name: Update Frontend Container
+        run: |
+          az webapp config container set \
+            --name "app-finance-tracker-frontend" \
+            --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            --docker-custom-image-name "${{ secrets.AZURE_CLIENT_ID }}.azurecr.io/frontend:latest"
       
-#       - name: Upload Smoke Test Results
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: smoke-test-results
-#           path: smoke-test-results.json
+      - name: Wait for Deployment
+        run: |
+          APP_URL="https://app-finance-tracker-6n8mk7w3.azurewebsites.net/api/auth/login"
+          echo "Waiting for app to wake up at $APP_URL..."
+          # Poll every 10 seconds for up to 5 minutes
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL")
+            if [ "$STATUS" -eq 405 ] || [ "$STATUS" -eq 200 ]; then
+              echo "App is up (Status: $STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i: App is still $STATUS. Waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for deployment"
+          exit 1
+
+  # SMOKE TESTS - Post-Deployment Validation
+  smoke-tests:
+    name: Smoke Tests - Health Checks
+    runs-on: ubuntu-latest
+    needs: deploy-application
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Health Check - API Endpoint
+        run: |
+          URL="https://app-finance-tracker-6n8mk7w3.azurewebsites.net/health"
+          echo "Checking Health Endpoint..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          echo "{\"health_check\": \"$STATUS\"}" > smoke-test-results.json
+          if [ "$STATUS" -ne 200 ]; then exit 1; fi
+      
+      - name: Smoke Test - Basic API Call
+        run: |
+          URL="https://app-finance-tracker-6n8mk7w3.azurewebsites.net/api/auth/login"
+          echo "Checking Auth Controller routing..."
+          # Sending GET to POST endpoint should return 405 if alive
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          echo "$(jq '. + {"api_routing": "'$STATUS'"}' smoke-test-results.json)" > smoke-test-results.json
+          if [ "$STATUS" -ne 405 ]; then exit 1; fi
+      
+      - name: Smoke Test - Database Connectivity
+        run: |
+          # Assuming you have a /health/db or similar endpoint that pings the SQL server
+          URL="https://app-finance-tracker-6n8mk7w3.azurewebsites.net/health/db"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          echo "$(jq '. + {"db_connectivity": "'$STATUS'"}' smoke-test-results.json)" > smoke-test-results.json
+          if [ "$STATUS" -ne 200 ]; then exit 1; fi
