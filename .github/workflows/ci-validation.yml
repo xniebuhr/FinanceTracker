@@ -126,6 +126,9 @@ jobs:
   global-lint:
     name: Global Lint (Super-Linter)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -134,9 +137,9 @@ jobs:
         uses: super-linter/super-linter@v7
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_CSHARP: true        # .NET check
-          VALIDATE_TYPESCRIPT_ES: true # Angular check
-          VALIDATE_TERRAFORM: true     # Terraform check
+          VALIDATE_CSHARP: true              # .NET check
+          VALIDATE_TYPESCRIPT_STANDARD: true # Angular check
+          VALIDATE_TERRAFORM: true           # Terraform check
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # DEPENDENCY SCANNING - GitHub Dependabot
