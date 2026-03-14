@@ -1,5 +1,4 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-
 import { TransactionService } from '../../services/transaction.service';
 import { Transaction } from '../../models/transaction.model';
 
@@ -34,7 +33,8 @@ export class TransactionListComponent implements OnInit {
   loadTransactions(): void {
     this.transactionService.getTransactions().subscribe({
       next: (data) => {
-        (this.transactions = data), (this.hasLoaded = true);
+        this.transactions = data;
+        this.hasLoaded = true;
         this.cdr.detectChanges();
         console.log(this.hasLoaded);
         console.log(this.transactions);
