@@ -1,0 +1,12 @@
+services:
+  backend:
+    image: ${DOCKER_REGISTRY_SERVER_URL}/backend:latest
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+
+  frontend:
+    image: ${DOCKER_REGISTRY_SERVER_URL}/frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend

@@ -257,11 +257,81 @@ resource "azurerm_linux_web_app" "main" {
 
 data "azurerm_client_config" "current" {}
 
-# Allows app service to pull from contanier registry
+# Grant app service access to ACR
 resource "azurerm_role_assignment" "acr_pull" {
   scope                = azurerm_container_registry.main.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
+}
+
+# Grant app service access to Key Vault
+resource "azurerm_key_vault_access_policy" "app_service" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_web_app.main.identity[0].principal_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
+}
+
+# Staging app service
+# This is identical to the real app service, only it is limited to my IP and is only for testing
+resource "azurerm_linux_web_app" "staging" {
+  name                = "staging-app-finance-tracker-${random_string.app_suffix.result}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.resources_location
+  service_plan_id     = azurerm_service_plan.main.id
+
+  enabled                       = true
+  public_network_access_enabled = true
+
+  # Turn on Managed Identity
+  identity {
+    type = "SystemAssigned"
+  }
+
+  app_settings = {
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+    "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
+  }
+
+  site_config {
+    always_on = false
+
+    # Placeholder image
+    application_stack {
+      docker_image_name   = "mcr.microsoft.com/dotnet/aspnet:8.0"
+      docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
+    }
+
+    ip_restriction {
+      name       = "AllowMyHomeIP"
+      ip_address = "${chomp(data.http.my_public_ip.response_body)}/32"
+      action     = "Allow"
+      priority   = 100
+    }
+  }
+}
+
+# Grant app service access to ACR
+resource "azurerm_role_assignment" "acr_pull_staging" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_linux_web_app.staging.identity[0].principal_id
+}
+
+# Grant app service access to Key Vault
+resource "azurerm_key_vault_access_policy" "app_service_staging" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_linux_web_app.staging.identity[0].principal_id
+
+  secret_permissions = [
+    "Get",
+    "List"
+  ]
 }
 
 resource "azurerm_key_vault" "main" {
@@ -293,19 +363,6 @@ resource "azurerm_key_vault" "main" {
     ]
   }
 }
-
-# Grant App Service access to Key Vault
-resource "azurerm_key_vault_access_policy" "app_service" {
-  key_vault_id = azurerm_key_vault.main.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_linux_web_app.main.identity[0].principal_id
-
-  secret_permissions = [
-    "Get",
-    "List"
-  ]
-}
-
 
 
 # Random suffixes
