@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Load configuration and secrets
 // ============================
 
-// Load secrets from .env for dev
+// Load secrets from .env for dev env
 if (builder.Environment.IsDevelopment())
 {
     Env.Load("secrets.env");
@@ -186,6 +186,28 @@ var app = builder.Build();
 
 // Health endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+
+// Database health endpoint
+app.MapGet("/health/db", async (ApplicationDbContext dbContext) =>
+{
+    try
+    {
+        bool canConnect = await dbContext.Database.CanConnectAsync();
+
+        if (canConnect)
+        {
+            return Results.Ok(new { status = "healthy", database = "connected" });
+        }
+
+        return Results.Problem("Database connection failed", statusCode: 500);
+    }
+    catch (Exception ex)
+    {
+        // Catching the exception is important so the whole app doesn't crash 
+        // if the DB is completely unreachable
+        return Results.Problem($"Database error: {ex.Message}", statusCode: 500);
+    }
+});
 
 // ============================
 // Configure middleware pipeline
