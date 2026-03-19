@@ -4,6 +4,7 @@ using finance_tracker.backend.Models.Auth;
 using finance_tracker.backend.Models.Users;
 using finance_tracker.backend.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -184,11 +185,21 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Trust Nginx proxy headers inside Docker network
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedOptions);
+
 // Health endpoint
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
 
 // Database health endpoint
-app.MapGet("/health/db", async (ApplicationDbContext dbContext) =>
+app.MapGet("/api/health/db", async (ApplicationDbContext dbContext) =>
 {
     try
     {
@@ -226,9 +237,6 @@ else
     app.UseHsts();
     app.UseCors("Production");
 }
-
-// Always use HTTPS
-app.UseHttpsRedirection();
 
 // Enable rate limiting
 app.UseRateLimiter();

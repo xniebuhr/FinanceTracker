@@ -3,6 +3,8 @@ services:
     image: ${DOCKER_REGISTRY_SERVER_URL}/backend:latest
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - Jwt__Key=${JWT_KEY}
 
   frontend:
     image: ${DOCKER_REGISTRY_SERVER_URL}/frontend:latest

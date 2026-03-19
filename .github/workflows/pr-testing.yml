@@ -20,13 +20,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Build with Docker Compose
-        run: docker compose build
+      - name: Build Docker Images
+        run: |
+          docker build -t pr-test/backend:latest -f ./finance_tracker.backend/Dockerfile ./finance_tracker.backend
+          docker build -t pr-test/frontend:latest -f ./finance_tracker.frontend/Dockerfile ./finance_tracker.frontend
       
       - name: Save Docker Images
         run: |
-          docker save finance-tracker-backend:latest | gzip > backend-image.tar.gz
-          docker save finance-tracker-frontend:latest | gzip > frontend-image.tar.gz
+          docker save pr-test/backend:latest | gzip > backend-image.tar.gz
+          docker save pr-test/frontend:latest | gzip > frontend-image.tar.gz
       
       - name: Upload Container Artifacts
         uses: actions/upload-artifact@v4
@@ -60,7 +62,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'image'
-          image-ref: 'finance-tracker-backend:latest'
+          image-ref: 'pr-test/backend:latest'
           format: 'sarif'
           output: 'trivy-backend-results.sarif'
       
@@ -68,7 +70,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'image'
-          image-ref: 'finance-tracker-frontend:latest'
+          image-ref: 'pr-test/frontend:latest'
           format: 'sarif'
           output: 'trivy-frontend-results.sarif'
       
@@ -113,22 +115,36 @@ jobs:
           docker load < backend-image.tar.gz
           docker load < frontend-image.tar.gz
       
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      
       - name: Start Application
         env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
-        run: docker compose up -d
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
       
       - name: Wait for Backend Health Check
         run: |
           echo "Waiting for backend to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:5000/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health | grep -q "200"; do sleep 2; done'
           echo "Backend is ready!"
       
       - name: Run OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
-          target: 'http://localhost:5000'
+          target: 'http://localhost'
           cmd_options: '-a'
       
       - name: Upload ZAP Results
@@ -140,7 +156,9 @@ jobs:
       
       - name: Stop Application
         if: always()
-        run: docker compose down
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
   # INTEGRATION TESTS - Containerized Backend
   # Depends on: build-containers (needs running app to test)
@@ -167,16 +185,30 @@ jobs:
           docker load < backend-image.tar.gz
           docker load < frontend-image.tar.gz
       
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      
       - name: Start Application
         env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
-        run: docker compose up -d
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
       
       - name: Wait for Backend Health Check
         run: |
           echo "Waiting for backend to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:5000/health; do sleep 2; done'
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health | grep -q "200"; do sleep 2; done'
           echo "Backend is ready!"
       
       - name: Run Integration Tests
@@ -185,7 +217,9 @@ jobs:
       
       - name: Stop Application
         if: always()
-        run: docker compose down
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
   # E2E TESTS - Cypress
   # Depends on: build-containers (needs running app to test)
@@ -212,16 +246,30 @@ jobs:
           docker load < backend-image.tar.gz
           docker load < frontend-image.tar.gz
       
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      
       - name: Start Application
         env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
           DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
-        run: docker compose up -d
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
       
       - name: Wait for Frontend
         run: |
           echo "Waiting for frontend to be ready..."
-          timeout 60 bash -c 'until curl -f http://localhost:4200; do sleep 2; done'
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200"; do sleep 2; done'
           echo "Frontend is ready!"
       
       - name: Install Cypress Dependencies
@@ -230,83 +278,85 @@ jobs:
       
       - name: Run Cypress Tests
         working-directory: ./finance_tracker.frontend
-        run: npx cypress run --browser chrome --headless
+        run: npx cypress run --browser chrome --headless --config baseUrl=http://localhost
       
       - name: Stop Application
         if: always()
-        run: docker compose down
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
   # PREVIEW CHANGES - Infrastructure & Database
   preview-changes:
-  name: Preview Changes - Infrastructure & Database
-  runs-on: ubuntu-latest
+    name: Preview Changes - Infrastructure & Database
+    runs-on: ubuntu-latest
   
-  permissions:
+    permissions:
       pull-requests: write
       contents: read
   
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.14.0
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.0
       
-    - name: Azure Login
-      uses: azure/login@v2
-      with:
-        client_id: ${{ secrets.AZURE_CREDENTIALS }}
-        tenant_id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
       
-    - name: Generate EF Migration Bundle
-      working-directory: ./finance_tracker.backend
-      run: |
-        dotnet tool install --global dotnet-ef
-        dotnet restore
-        dotnet ef migrations bundle --output /tmp/migrations.exe --self-contained -r linux-x64
+      - name: Generate EF Migration Bundle
+        working-directory: ./finance_tracker.backend
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet restore
+          dotnet ef migrations bundle --output /tmp/migrations.exe --self-contained -r linux-x64
       
-    - name: Terraform Init
-      working-directory: ./terraform
-      run: terraform init
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
       
-    - name: Terraform Plan
-      working-directory: ./terraform
-      run: |
-        terraform plan -input=false -out=tfplan 2>&1 | tee /tmp/terraform-plan.txt
-      env:
-        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: |
+          terraform plan -input=false -out=tfplan 2>&1 | tee /tmp/terraform-plan.txt
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
       
-    - name: Comment PR with Terraform Plan
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          const plan = fs.readFileSync('/tmp/terraform-plan.txt', 'utf8');
-          const body = `## Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+      - name: Comment PR with Terraform Plan
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('/tmp/terraform-plan.txt', 'utf8');
+            const body = `## Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
             
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.payload.pull_request.number,
-            body: body
-          });
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
       
-    - name: Upload Terraform Plan
-      uses: actions/upload-artifact@v4
-      with:
-        name: terraform-plan
-        path: terraform/tfplan
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/tfplan

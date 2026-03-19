@@ -226,6 +226,7 @@ resource "azurerm_linux_web_app" "main" {
 
   enabled                       = true
   public_network_access_enabled = true
+  https_only                    = true
 
   # Turn on Managed Identity
   identity {
@@ -238,20 +239,22 @@ resource "azurerm_linux_web_app" "main" {
   }
 
   site_config {
-    always_on = false
+    always_on                               = false
+    container_registry_use_managed_identity = true
 
     # Placeholder image
     application_stack {
       docker_image_name   = "mcr.microsoft.com/dotnet/aspnet:8.0"
       docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
     }
+  }
 
-    ip_restriction {
-      name       = "AllowMyHomeIP"
-      ip_address = "${chomp(data.http.my_public_ip.response_body)}/32"
-      action     = "Allow"
-      priority   = 100
-    }
+  lifecycle {
+    ignore_changes = [
+      app_settings["JWT_KEY"],
+      app_settings["DB_CONNECTION_STRING"],
+      site_config[0].application_stack
+    ]
   }
 }
 
@@ -286,6 +289,7 @@ resource "azurerm_linux_web_app" "staging" {
 
   enabled                       = true
   public_network_access_enabled = true
+  https_only                    = true
 
   # Turn on Managed Identity
   identity {
@@ -298,7 +302,8 @@ resource "azurerm_linux_web_app" "staging" {
   }
 
   site_config {
-    always_on = false
+    always_on                               = false
+    container_registry_use_managed_identity = true
 
     # Placeholder image
     application_stack {
@@ -312,6 +317,14 @@ resource "azurerm_linux_web_app" "staging" {
       action     = "Allow"
       priority   = 100
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      app_settings["JWT_KEY"],
+      app_settings["DB_CONNECTION_STRING"],
+      site_config[0].application_stack
+    ]
   }
 }
 
