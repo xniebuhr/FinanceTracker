@@ -7,11 +7,6 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  # Re-run all CI validations
-  run-ci-validations:
-    name: Run CI Validations
-    uses: ./.github/workflows/ci-validation.yml
-
   # CONTAINERIZATION - Build Docker Images via Compose
   build-containers:
     name: Build Docker Containers
@@ -22,7 +17,7 @@ jobs:
       
       - name: Build Docker Images
         run: |
-          docker build -t pr-test/backend:latest -f ./finance_tracker.backend/Dockerfile ./finance_tracker.backend
+          docker build -t pr-test/backend:latest -f ./finance_tracker.backend/finance_tracker.backend/Dockerfile ./finance_tracker.backend/finance_tracker.backend
           docker build -t pr-test/frontend:latest -f ./finance_tracker.frontend/Dockerfile ./finance_tracker.frontend
       
       - name: Save Docker Images
