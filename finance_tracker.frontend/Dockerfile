@@ -11,7 +11,7 @@ RUN npm run build --prod
 
 # Runtime stage - serve with nginx
 FROM nginx:alpine
-COPY --from=build /app/dist/finance-tracker-frontend /usr/share/nginx/html
+COPY --from=build /app/dist/finance-tracker/browser /usr/share/nginx/html
 
 # Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
