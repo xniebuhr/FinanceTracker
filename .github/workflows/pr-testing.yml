@@ -294,6 +294,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.14.0
+          terraform_wrapper: false
       
       - name: Azure Login
         uses: azure/login@v2
@@ -332,7 +333,7 @@ jobs:
           script: |
             const fs = require('fs');
             const plan = fs.readFileSync('/tmp/terraform-plan.txt', 'utf8');
-            const body = `## Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+            const body = `## Terraform Plan\n\`\`\`diff\n${plan}\n\`\`\``;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
