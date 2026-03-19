@@ -1,0 +1,7 @@
+resource_group_name     = "FinanceTrackerResources"
+resource_group_location = "westus2"
+resources_location      = "westus3"
+vnet_name               = "finance-tracker-vnet"
+sql_server_name         = "finance-tracker-server0"
+sql_database_name       = "FinanceTrackerDb"
+sql_admin_username      = "CloudSA39fd8586"
