@@ -302,6 +302,9 @@ jobs:
       
       - name: Generate EF Migration Bundle
         working-directory: ./finance_tracker.backend/finance_tracker.backend
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
         run: |
           dotnet tool install --global dotnet-ef
           dotnet restore
