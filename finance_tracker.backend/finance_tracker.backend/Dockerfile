@@ -16,7 +16,7 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish.
+COPY --from=publish /app/publish .
 
 # ASP.NET default is 8080
 EXPOSE 8080

@@ -93,7 +93,7 @@ jobs:
       - name: Build & Tag Images
         run: |
           # Backend
-          docker build -t ${{ env.ACR_SERVER }}/backend:${{ github.sha }} -f ./finance_tracker.backend/Dockerfile ./finance_tracker.backend
+          docker build -t ${{ env.ACR_SERVER }}/backend:${{ github.sha }} -f ./finance_tracker.backend/finance_tracker.backend/Dockerfile ./finance_tracker.backend/finance_tracker.backend
           docker tag ${{ env.ACR_SERVER }}/backend:${{ github.sha }} ${{ env.ACR_SERVER }}/backend:latest
           
           # Frontend
