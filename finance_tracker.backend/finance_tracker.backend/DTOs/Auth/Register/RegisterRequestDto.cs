@@ -6,19 +6,19 @@ namespace finance_tracker.backend.DTOs.Auth.Register
     {
         [Required]
         [MaxLength(30)]
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         [Required]
         [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
         [MinLength(8)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
         [Required]
         [MaxLength(50)]
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         [MaxLength(50)]
         public string? LastName { get; set; }

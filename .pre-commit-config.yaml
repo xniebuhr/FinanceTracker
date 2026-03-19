@@ -4,14 +4,26 @@ repos:
     hooks:
       - id: dotnet-format
         name: .NET Code Format
-        entry: bash -c 'cd finance_tracker.backend && dotnet format'
+        entry: dotnet format finance_tracker.backend
         language: system
         pass_filenames: false
+        files: ^finance_tracker.backend/.*\.cs$
   
+  # Angular Code Formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Frontend Format
+        files: ^finance_tracker.frontend/src/.*\.(ts|html|scss|json)$ 
+        args: ["--write"]
+
   # Terraform Formatting
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.104.0
+  - repo: local
     hooks:
       - id: terraform_fmt
         name: Terraform Format
+        entry: terraform fmt -recursive terraform/
+        language: system
+        pass_filenames: false
         files: \.tf$

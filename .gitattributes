@@ -1,0 +1,7 @@
+# Fix CLRF because it's an absolute nightmare to deal with
+* text=auto eol=lf
+
+*.ts text eol=lf
+*.html text eol=lf
+*.scss text eol=lf
+*.json text eol=lf

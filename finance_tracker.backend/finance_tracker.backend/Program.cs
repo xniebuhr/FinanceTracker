@@ -4,6 +4,7 @@ using finance_tracker.backend.Models.Auth;
 using finance_tracker.backend.Models.Users;
 using finance_tracker.backend.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,8 +19,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Load configuration and secrets
 // ============================
 
-// Load secrets from .env
-Env.Load("secrets.env");
+// Load secrets from .env for dev env
+if (builder.Environment.IsDevelopment())
+{
+    Env.Load("secrets.env");
+}
 
 // And env variables to configuration
 builder.Configuration.AddEnvironmentVariables();
@@ -28,19 +32,28 @@ builder.Configuration.AddEnvironmentVariables();
 // Build database connection string
 // ============================
 
-// Pull raw connection string template from appsettings.json
-var rawConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+string connectionString;
 
-// Replace placeholders with environment variables
-// - Use ADMIN credentials in Development
-// - Use GUEST credentials in Production
-var connectionString = rawConnection
-    .Replace("{SERVER_NAME}", Environment.GetEnvironmentVariable("SERVER_NAME"))
-    .Replace("{DB_NAME}", Environment.GetEnvironmentVariable("DB_NAME"))
-    .Replace("{DB_USER}", Environment.GetEnvironmentVariable(
-        builder.Environment.IsDevelopment() ? "ADMIN_ID" : "GUEST_ID"))
-    .Replace("{DB_PASSWORD}", Environment.GetEnvironmentVariable(
-        builder.Environment.IsDevelopment() ? "ADMIN_PASSWORD" : "GUEST_PASSWORD"));
+// Try to get connection string first from docker
+connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// If it has placeholders, build from env vars (local dev)
+if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("{SERVER_NAME}"))
+{
+    connectionString = connectionString
+        .Replace("{SERVER_NAME}", Environment.GetEnvironmentVariable("SERVER_NAME"))
+        .Replace("{DB_NAME}", Environment.GetEnvironmentVariable("DB_NAME"))
+        .Replace("{DB_USER}", Environment.GetEnvironmentVariable(
+            builder.Environment.IsDevelopment() ? "ADMIN_ID" : "GUEST_ID"))
+        .Replace("{DB_PASSWORD}", Environment.GetEnvironmentVariable(
+            builder.Environment.IsDevelopment() ? "ADMIN_PASSWORD" : "GUEST_PASSWORD"));
+}
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string is not configured");
+}
+
 
 // ============================
 // Register EF Core + Identity
@@ -55,29 +68,34 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+
 // ============================
 // Configure CORS policies
 // ============================
 
-// Allow Angular dev server in Development
-// Allow production frontend in Production
+// Get allowed origins from evironment
+var corsOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")
+    ?? (builder.Environment.IsDevelopment()
+        ? "http://localhost:4200"
+        : "https://app-finance-tracker-6n8mk7w3.azurewebsites.net");
+
+var allowedOrigins = corsOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Development", policy =>
+    options.AddPolicy(builder.Environment.IsDevelopment() ? "Development" : "Production", policy =>
     {
-        policy.WithOrigins("http://localhost:4200") // Angular dev server
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
-    });
 
-    options.AddPolicy("Production", policy =>
-    {
-        policy.WithOrigins("https://DOMAIN.com")
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        if (!builder.Environment.IsDevelopment())
+        {
+            policy.AllowCredentials();
+        }
     });
 });
+
 
 // ============================
 // Configure JWT authentication
@@ -94,8 +112,16 @@ builder.Services.AddSingleton(resolver =>
 // Register TokenService for DI
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
-// Pull JWT values directly for authentication setup
-var jwtKey = builder.Configuration["Jwt:Key"];
+// Pull JWT key from environment first
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? builder.Configuration["Jwt:Key"];
+
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new InvalidOperationException("JWT signing key is not configured. Set JWT_KEY environment variable or Jwt:Key in appsettings.");
+}
+
+// Pull JWT values from config
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
@@ -110,7 +136,6 @@ builder.Services.AddAuthentication(
     .AddJwtBearer(options =>
     {
         options.RequireHttpsMetadata = true;
-        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -122,6 +147,7 @@ builder.Services.AddAuthentication(
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
+
 
 // ============================
 // Add rate limiting
@@ -159,6 +185,41 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Trust Nginx proxy headers inside Docker network
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedOptions);
+
+// Health endpoint
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
+
+// Database health endpoint
+app.MapGet("/api/health/db", async (ApplicationDbContext dbContext) =>
+{
+    try
+    {
+        bool canConnect = await dbContext.Database.CanConnectAsync();
+
+        if (canConnect)
+        {
+            return Results.Ok(new { status = "healthy", database = "connected" });
+        }
+
+        return Results.Problem("Database connection failed", statusCode: 500);
+    }
+    catch (Exception ex)
+    {
+        // Catching the exception is important so the whole app doesn't crash 
+        // if the DB is completely unreachable
+        return Results.Problem($"Database error: {ex.Message}", statusCode: 500);
+    }
+});
+
 // ============================
 // Configure middleware pipeline
 // ============================
@@ -176,9 +237,6 @@ else
     app.UseHsts();
     app.UseCors("Production");
 }
-
-// Always use HTTPS
-app.UseHttpsRedirection();
 
 // Enable rate limiting
 app.UseRateLimiter();

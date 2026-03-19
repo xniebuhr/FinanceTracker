@@ -8,13 +8,9 @@ import { TransactionFormComponent } from './components/transaction-form/transact
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [
-    RouterOutlet,
-    TransactionListComponent,
-    TransactionFormComponent
-],
+  imports: [RouterOutlet, TransactionListComponent, TransactionFormComponent],
   templateUrl: './app.html',
-  styleUrls: ['./app.css']
+  styleUrls: ['./app.css'],
 })
 export class App {
   protected readonly title = 'finance-tracker';

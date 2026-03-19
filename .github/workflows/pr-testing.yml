@@ -6,204 +6,348 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
 
-# jobs:
-#   # Re-run all CI validations
-#   run-ci-validations:
-#     name: Run CI Validations
-#     uses: ./.github/workflows/ci-validation.yml
+jobs:
+  # CONTAINERIZATION - Build Docker Images via Compose
+  build-containers:
+    name: Build Docker Containers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build Docker Images
+        run: |
+          docker build -t pr-test/backend:latest -f ./finance_tracker.backend/finance_tracker.backend/Dockerfile ./finance_tracker.backend/finance_tracker.backend
+          docker build -t pr-test/frontend:latest -f ./finance_tracker.frontend/Dockerfile ./finance_tracker.frontend
+      
+      - name: Save Docker Images
+        run: |
+          docker save pr-test/backend:latest | gzip > backend-image.tar.gz
+          docker save pr-test/frontend:latest | gzip > frontend-image.tar.gz
+      
+      - name: Upload Container Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-containers
+          path: |
+            backend-image.tar.gz
+            frontend-image.tar.gz
 
-#   # CONTAINERIZATION - Build Docker Image
-#   build-container:
-#     name: Build Docker Container
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # CONTAINER SECURITY SCANNING - Trivy
+  # Depends on: build-containers (needs images to scan)
+  container-security-scan:
+    name: Container Security - Trivy
+    runs-on: ubuntu-latest
+    needs: build-containers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Build Docker Image
-#         # PLACEHOLDER: docker build -t backend:pr .
-#         run: echo "Docker build placeholder"
+      - name: Download Container Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-containers
       
-#       - name: Save Docker Image as Artifact
-#         # PLACEHOLDER: docker save | gzip > image.tar.gz
-#         run: echo "Save image placeholder"
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
       
-#       - name: Upload Container Artifact
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: backend-container
-#           path: backend-image.tar.gz
+      - name: Scan Backend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'pr-test/backend:latest'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+      
+      - name: Scan Frontend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: 'pr-test/frontend:latest'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+      
+      - name: Upload Backend Trivy Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+          category: 'trivy-backend'
+      
+      - name: Upload Frontend Trivy Results
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend'
+      
+      - name: Upload Trivy Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-container-reports
+          path: |
+            trivy-backend-results.sarif
+            trivy-frontend-results.sarif
 
-#   # CONTAINER SECURITY SCANNING - Trivy
-#   container-security-scan:
-#     name: Container Security - Trivy
-#     runs-on: ubuntu-latest
-#     needs: build-container
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # DYNAMIC APPLICATION SECURITY TESTING - OWASP ZAP
+  # Depends on: build-containers (needs running app to test)
+  dast-owasp-zap:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: build-containers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Download Container Artifact
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: backend-container
+      - name: Download Container Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-containers
       
-#       - name: Load Docker Image
-#         # PLACEHOLDER: docker load < image.tar.gz
-#         run: echo "Load image placeholder"
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
       
-#       - name: Run Trivy Container Scan
-#         uses: aquasecurity/trivy-action@master
-#         with:
-#           scan-type: 'image'
-#           image-ref: 'backend:pr'
-#           format: 'sarif'
-#           output: 'trivy-container-results.sarif'
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
       
-#       - name: Upload Trivy Results
-#         uses: github/codeql-action/upload-sarif@v3
-#         with:
-#           sarif_file: 'trivy-container-results.sarif'
+      - name: Start Application
+        env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
       
-#       - name: Upload Trivy Report
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: trivy-container-report
-#           path: trivy-container-results.sarif
+      - name: Wait for Backend Health Check
+        run: |
+          echo "Waiting for backend to be ready..."
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health | grep -q "200"; do sleep 2; done'
+          echo "Backend is ready!"
+      
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost'
+          cmd_options: '-a'
+      
+      - name: Upload ZAP Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-results
+          path: report_html.html
+      
+      - name: Stop Application
+        if: always()
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
-#   # INTEGRATION TESTS - Containerized Backend
-#   integration-tests:
-#     name: Integration Tests
-#     runs-on: ubuntu-latest
-#     needs: build-container
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # INTEGRATION TESTS - Containerized Backend
+  # Depends on: build-containers (needs running app to test)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build-containers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Download Container Artifact
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: backend-container
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
       
-#       - name: Load and Start Container
-#         # PLACEHOLDER: docker load and docker run
-#         run: echo "Start container placeholder"
+      - name: Download Container Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-containers
       
-#       - name: Run Integration Tests
-#         # PLACEHOLDER: Run tests against running container
-#         run: echo "Integration tests placeholder"
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
       
-#       - name: Upload Test Results
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: integration-test-results
-#           path: test-results/
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
       
-#       - name: Stop Container
-#         if: always()
-#         run: echo "Stop container placeholder"
+      - name: Start Application
+        env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
+      
+      - name: Wait for Backend Health Check
+        run: |
+          echo "Waiting for backend to be ready..."
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost/api/health | grep -q "200"; do sleep 2; done'
+          echo "Backend is ready!"
+      
+      - name: Run Integration Tests
+        working-directory: ./finance_tracker.backend/finance_tracker.backend.Tests
+        run: dotnet test --filter "Category=Integration"
+      
+      - name: Stop Application
+        if: always()
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
-#   # E2E TESTS - Cypress
-#   e2e-tests:
-#     name: E2E Tests - Cypress
-#     runs-on: ubuntu-latest
-#     needs: build-container
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+  # E2E TESTS - Cypress
+  # Depends on: build-containers (needs running app to test)
+  e2e-tests:
+    name: E2E Tests - Cypress
+    runs-on: ubuntu-latest
+    needs: build-containers
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-#       - name: Download Container Artifact
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: backend-container
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
       
-#       - name: Setup Test Environment
-#         # PLACEHOLDER: Start backend + frontend containers
-#         run: echo "Setup E2E environment placeholder"
+      - name: Download Container Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-containers
       
-#       - name: Run Cypress Tests
-#         # PLACEHOLDER: npx cypress run
-#         run: echo "Cypress tests placeholder"
+      - name: Load Docker Images
+        run: |
+          docker load < backend-image.tar.gz
+          docker load < frontend-image.tar.gz
       
-#       - name: Upload Cypress Results
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: cypress-results
-#           path: |
-#             cypress/videos/
-#             cypress/screenshots/
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
       
-#       - name: Teardown Test Environment
-#         if: always()
-#         run: echo "Teardown placeholder"
+      - name: Start Application
+        env:
+          DOCKER_REGISTRY_SERVER_URL: pr-test
+          DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          SQL_SERVER=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
+          echo "SQL_SERVER=$SQL_SERVER" >> $GITHUB_ENV
+          az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+          docker compose -f docker-compose.prod.yml up -d
+      
+      - name: Wait for Frontend
+        run: |
+          echo "Waiting for frontend to be ready..."
+          timeout 60 bash -c 'until curl -s -o /dev/null -w "%{http_code}" http://localhost | grep -q "200"; do sleep 2; done'
+          echo "Frontend is ready!"
+      
+      - name: Install Cypress Dependencies
+        working-directory: ./finance_tracker.frontend
+        run: npm ci
+      
+      - name: Run Cypress Tests
+        working-directory: ./finance_tracker.frontend
+        run: echo "Cypress e2e tests placeholder"
+      
+      - name: Stop Application
+        if: always()
+        run: |
+          az sql server firewall-rule delete -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER" -n "Runner-${{ github.run_id }}-${{ github.job }}"
+          docker compose -f docker-compose.prod.yml down
 
-#   # DYNAMIC APPLICATION SECURITY TESTING - OWASP ZAP
-#   dast-owasp-zap:
-#     name: DAST - OWASP ZAP
-#     runs-on: ubuntu-latest
-#     needs: build-container
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-      
-#       - name: Download Container Artifact
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: backend-container
-      
-#       - name: Start Application
-#         # PLACEHOLDER: docker run -d backend:pr
-#         run: echo "Start app placeholder"
-      
-#       - name: Run OWASP ZAP Scan
-#         # PLACEHOLDER: ZAP baseline or full scan
-#         run: echo "OWASP ZAP placeholder"
-      
-#       - name: Upload ZAP Results
-#         if: always()
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: zap-scan-results
-#           path: zap-report.html
-      
-#       - name: Stop Application
-#         if: always()
-#         run: echo "Stop app placeholder"
+  # PREVIEW CHANGES - Infrastructure & Database
+  preview-changes:
+    name: Preview Changes - Infrastructure & Database
+    runs-on: ubuntu-latest
+  
+    permissions:
+      pull-requests: write
+      contents: read
+  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-#   # PREVIEW CHANGES - Infrastructure & Database
-#   preview-changes:
-#     name: Preview Changes - Infrastructure & Database
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.0
+          terraform_wrapper: false
       
-#       - name: Setup .NET
-#         uses: actions/setup-dotnet@v4
-#         with:
-#           dotnet-version: '8.x'
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
       
-#       - name: Setup Terraform
-#         uses: hashicorp/setup-terraform@v3
+      - name: Generate EF Migration Bundle
+        working-directory: ./finance_tracker.backend/finance_tracker.backend
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet restore
+          dotnet ef migrations bundle --output /tmp/migrations.exe --self-contained -r linux-x64
       
-#       - name: Generate EF Migration Bundle
-#         working-directory: ./backend
-#         # PLACEHOLDER: dotnet ef migrations bundle (don't apply)
-#         run: echo "EF migration bundle placeholder"
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
       
-#       - name: Terraform Init
-#         working-directory: ./terraform
-#         # PLACEHOLDER: terraform init
-#         run: echo "terraform init placeholder"
+      - name: Terraform Plan
+        working-directory: ./terraform
+        run: |
+          terraform plan -input=false -out=tfplan -no-color > /tmp/terraform-plan.txt 2>&1 || {
+            cat /tmp/terraform-plan.txt
+            exit 1
+          }
+          cat /tmp/terraform-plan.txt
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_sql_admin_password: ${{ secrets.SQL_ADMIN_PASSWORD }}
       
-#       - name: Terraform Plan
-#         working-directory: ./terraform
-#         # PLACEHOLDER: terraform plan -out=tfplan
-#         run: echo "terraform plan placeholder"
+      - name: Comment PR with Terraform Plan
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('/tmp/terraform-plan.txt', 'utf8');
+            const body = `## Terraform Plan\n\`\`\`diff\n${plan}\n\`\`\``;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: body
+            });
       
-#       - name: Comment PR with Changes
-#         # PLACEHOLDER: Post terraform plan & migration info to PR
-#         run: echo "PR comment placeholder"
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/tfplan
