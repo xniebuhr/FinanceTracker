@@ -318,7 +318,11 @@ jobs:
       - name: Terraform Plan
         working-directory: ./terraform
         run: |
-          terraform plan -input=false -out=tfplan 2>&1 | tee /tmp/terraform-plan.txt
+          terraform plan -input=false -out=tfplan -no-color > /tmp/terraform-plan.txt 2>&1 || {
+            cat /tmp/terraform-plan.txt
+            exit 1
+          }
+          cat /tmp/terraform-plan.txt
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
