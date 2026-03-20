@@ -11,6 +11,10 @@ RUN npm run build --prod
 
 # Runtime stage - serve with nginx
 FROM nginx:alpine
+
+# Make sure alpine packages are up to date
+RUN apk upgrade --no-cache
+
 COPY --from=build /app/dist/finance-tracker/browser /usr/share/nginx/html
 
 # Copy nginx config
