@@ -16,6 +16,10 @@ RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+
+# Make sure OS packages are up to date
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+
 COPY --from=publish /app/publish .
 
 # ASP.NET default is 8080
