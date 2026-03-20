@@ -61,7 +61,13 @@ if (string.IsNullOrEmpty(connectionString))
 
 // Add EF Core DbContext with SQL Server provider
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null)
+    ));
 
 // Add ASP.NET Core Identity with ApplicationUser
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
