@@ -212,11 +212,6 @@ resource "azurerm_service_plan" "main" {
   sku_name            = "F1"
 }
 
-# Get my public IP so only I can access the app (for now)
-data "http" "my_public_ip" {
-  url = "https://ifconfig.me/ip"
-}
-
 # The actual App Service
 resource "azurerm_linux_web_app" "main" {
   name                = "app-finance-tracker-${random_string.app_suffix.result}"
@@ -313,7 +308,7 @@ resource "azurerm_linux_web_app" "staging" {
 
     ip_restriction {
       name       = "AllowMyHomeIP"
-      ip_address = "${chomp(data.http.my_public_ip.response_body)}/32"
+      ip_address = var.my_home_ip
       action     = "Allow"
       priority   = 100
     }
@@ -361,20 +356,16 @@ resource "azurerm_key_vault" "main" {
     default_action = "Allow"
     bypass         = "AzureServices"
   }
+}
 
-  access_policy {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    object_id = data.azurerm_client_config.current.object_id
+resource "azurerm_key_vault_access_policy" "deployer" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
 
-    secret_permissions = [
-      "Get",
-      "List",
-      "Set",
-      "Delete",
-      "Purge",
-      "Recover"
-    ]
-  }
+  secret_permissions = [
+    "Get", "List", "Set", "Delete", "Purge", "Recover"
+  ]
 }
 
 
