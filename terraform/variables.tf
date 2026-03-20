@@ -33,8 +33,7 @@ variable "sql_admin_username" {
   type        = string
 }
 
-variable "sql_admin_password" {
-  description = "SQL Server administrator password"
+variable "my_home_ip" {
+  description = "My home IP address"
   type        = string
-  sensitive   = true
 }
