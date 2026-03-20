@@ -66,6 +66,9 @@ jobs:
           SQL_SERVER_NAME=$(az sql server list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].name" -o tsv)
           echo "SQL_SERVER_NAME=$SQL_SERVER_NAME" >> $GITHUB_ENV
           az sql server firewall-rule create -g "${{ secrets.RESOURCE_GROUP_NAME }}" -s "$SQL_SERVER_NAME" -n "GitHubRunner" --start-ip-address $RUNNER_IP --end-ip-address $RUNNER_IP
+
+          echo "Waiting 30 seconds for Azure SQL to wake up..."
+          sleep 30
       
       - name: Run EF Migrations
         working-directory: ./finance_tracker.backend/finance_tracker.backend
