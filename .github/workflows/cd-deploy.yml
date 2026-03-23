@@ -186,6 +186,15 @@ jobs:
           echo "Restarting App Service to apply new configuration..."
           az webapp restart --name "$STAGING_APP" --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}"
 
+      - name: Inject Application Secrets
+        run: |
+          az webapp config appsettings set \
+            -g "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            -n "$STAGING_APP" \
+            --settings \
+            DB_CONNECTION_STRING="${{ secrets.DB_CONNECTION_STRING }}" \
+            JWT_KEY="${{ secrets.JWT_KEY }}"
+      
       - name: Whitelist Runner IP on Staging App
         run: |
           RUNNER_IP=$(curl -s https://api.ipify.org)
@@ -281,3 +290,12 @@ jobs:
           # Force restart to apply new configuration
           echo "Restarting Production App Service..."
           az webapp restart --name "$PROD_APP" --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}"
+
+      - name: Inject Application Secrets
+        run: |
+          az webapp config appsettings set \
+            -g "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            -n "$PROD_APP" \
+            --settings \
+            DB_CONNECTION_STRING="${{ secrets.DB_CONNECTION_STRING }}" \
+            JWT_KEY="${{ secrets.JWT_KEY }}"
