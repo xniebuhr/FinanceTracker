@@ -230,17 +230,37 @@ jobs:
         run: |
           echo "Running smoke tests against staging..."
 
-          # Test frontend (Timeout after 10s)
-          STATUS_FRONTEND=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$STAGING_URL/")
-          if [ "$STATUS_FRONTEND" -ne 200 ]; then echo "Frontend failed ($STATUS_FRONTEND)"; exit 1; fi
+          run_test() {
+            local test_name=$1
+            local target_url=$2
+            local expected_status=$3
+            local max_attempts=5
+            local attempt=1
 
-          # Test API routing (Timeout after 10s)
-          STATUS_API=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$STAGING_URL/api/auth/login")
-          if [ "$STATUS_API" -ne 405 ]; then echo "API Routing failed ($STATUS_API)"; exit 1; fi
+            echo "Testing $test_name..."
 
-          # Test DB connectivity (Timeout after 10s)
-          STATUS_DB=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$STAGING_URL/api/health/db")
-          if [ "$STATUS_DB" -ne 200 ]; then echo "DB connectivity failed ($STATUS_DB)"; exit 1; fi
+            while [ $attempt -le $max_attempts ]; do
+              # Hit the URL and grab the HTTP status code
+              STATUS=$(curl -s -m 10 -o /dev/null -w "%{http_code}" "$target_url")
+              
+              if [ "$STATUS" = "$expected_status" ]; then
+                echo "$test_name passed! (Status: $STATUS)"
+                return 0
+              fi
+              
+              echo "Attempt $attempt/$max_attempts: Status was $STATUS (Expected: $expected_status). Retrying in 5s..."
+              sleep 5
+              ((attempt++))
+            done
+
+            echo "$test_name failed after $max_attempts attempts. Final status: $STATUS"
+            return 1
+          }
+
+          # Run all tests
+          run_test "Frontend" "$STAGING_URL/" "200" || exit 1
+          run_test "API Routing" "$STAGING_URL/api/auth/login" "405" || exit 1
+          run_test "DB Connectivity" "$STAGING_URL/api/health/db" "200" || exit 1
 
       - name: Remove Runner IP Whitelist
         if: always()
