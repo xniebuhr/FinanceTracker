@@ -231,6 +231,7 @@ resource "azurerm_linux_web_app" "main" {
   app_settings = {
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
     "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
+    "WEBSITES_PORT"                       = "8080"
   }
 
   site_config {
@@ -294,6 +295,7 @@ resource "azurerm_linux_web_app" "staging" {
   app_settings = {
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
     "DOCKER_REGISTRY_SERVER_URL"          = "https://${azurerm_container_registry.main.login_server}"
+    "WEBSITES_PORT"                       = "8080"
   }
 
   site_config {
