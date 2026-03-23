@@ -167,13 +167,24 @@ jobs:
 
       - name: Deploy Compose to Staging
         run: |
-          export DOCKER_REGISTRY_SERVER_URL=${{ env.ACR_SERVER }}
+          # Fetch ACR server name
+          ACR_SERVER=$(az acr list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].loginServer" -o tsv)
+          export DOCKER_REGISTRY_SERVER_URL=$ACR_SERVER
+          echo "Using Registry: $DOCKER_REGISTRY_SERVER_URL"
+
+          # Inject it into the compose file
           envsubst '$DOCKER_REGISTRY_SERVER_URL' < docker-compose.prod.yml > deploy-compose.yml
 
+          # Push to Azure
           az webapp config container set \
             --name "$STAGING_APP" \
             --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            --multicontainer-config-type COMPOSE \
             --multicontainer-config-file deploy-compose.yml
+
+          # 4. Force restart to fix cold start block
+          echo "Restarting App Service to apply new configuration..."
+          az webapp restart --name "$STAGING_APP" --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}"
 
       - name: Whitelist Runner IP on Staging App
         run: |
@@ -243,19 +254,30 @@ jobs:
         uses: azure/login@v2
         with:
           creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
-      
+
       - name: Get Prod App Name
         id: get-prod  
         run: |
           PROD_APP=$(az webapp list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[?contains(name, 'app-finance-tracker') && !contains(name, 'staging')].name" -o tsv)
           echo "PROD_APP=$PROD_APP" >> $GITHUB_ENV
- 
+
       - name: Deploy Compose to Production
         run: |
-          export DOCKER_REGISTRY_SERVER_URL=${{ env.ACR_SERVER }}
+          # Fetch ACR server name
+          ACR_SERVER=$(az acr list -g "${{ secrets.RESOURCE_GROUP_NAME }}" --query "[0].loginServer" -o tsv)
+          export DOCKER_REGISTRY_SERVER_URL=$ACR_SERVER
+          echo "Using Registry: $DOCKER_REGISTRY_SERVER_URL"
+
+          # Inject it into the compose file
           envsubst '$DOCKER_REGISTRY_SERVER_URL' < docker-compose.prod.yml > deploy-compose.yml
-          
+
+          # Push to Azure (Targeting Production)
           az webapp config container set \
             --name "$PROD_APP" \
             --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}" \
+            --multicontainer-config-type COMPOSE \
             --multicontainer-config-file deploy-compose.yml
+
+          # Force restart to apply new configuration
+          echo "Restarting Production App Service..."
+          az webapp restart --name "$PROD_APP" --resource-group "${{ secrets.RESOURCE_GROUP_NAME }}"
