@@ -107,7 +107,7 @@ jobs:
           echo "ACR_SERVER=$ACR_SERVER" >> $GITHUB_ENV
 
       - name: Login to Azure Container Registry
-        uses: azure/docker-login@v1
+        uses: azure/docker-login@15c4aadf093404726ab2ff205b2cdd33fa6d054c # v2
         with: 
           login-server: ${{ env.ACR_SERVER }}
           username: ${{ secrets.AZURE_CLIENT_ID }}
