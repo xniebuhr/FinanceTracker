@@ -16,7 +16,7 @@ jobs:
         working-directory: ./terraform
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -48,7 +48,7 @@ jobs:
     needs: deploy-infrastructure
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -93,7 +93,7 @@ jobs:
     needs: deploy-database
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -151,7 +151,7 @@ jobs:
     needs: build-and-push-container
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -277,7 +277,7 @@ jobs:
     needs: deploy-staging
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Login to Azure
         uses: azure/login@v2

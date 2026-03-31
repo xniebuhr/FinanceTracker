@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0  # Full history
 
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -51,7 +51,7 @@ jobs:
    runs-on: ubuntu-latest
    steps:
      - name: Checkout code
-       uses: actions/checkout@v4
+       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
      
      - name: Setup Node.js
        uses: actions/setup-node@v4
@@ -75,7 +75,7 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -118,7 +118,7 @@ jobs:
    name: Format - Angular
    runs-on: ubuntu-latest
    steps:
-     - uses: actions/checkout@v4
+     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
      - name: Check Prettier
        run: npx prettier --check "finance_tracker.frontend/src/**/*.{ts,html,scss}"
 
@@ -132,7 +132,7 @@ jobs:
       contents: read
       statuses: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0 
       - name: Lint Code Base
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -169,7 +169,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Check for Dependabot Alerts (.NET)
         working-directory: ./finance_tracker.backend
@@ -199,7 +199,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Run Trivy Config Scan
         uses: aquasecurity/trivy-action@master
