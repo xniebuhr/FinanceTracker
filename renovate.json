@@ -27,14 +27,16 @@
     },
     {
       "groupName": "Angular Packages",
-      "matchPackagePatterns": ["^@angular/"]
+      "matchPackageNames": [
+        "/^@angular//"
+      ]
     },
     {
       "groupName": ".NET Core Framework",
-      "matchPackagePatterns": [
-        "^System\\.",
-        "^Microsoft\\.Extensions",
-        "^Microsoft\\.AspNetCore"
+      "matchPackageNames": [
+        "/^System\./",
+        "/^Microsoft\.Extensions/",
+        "/^Microsoft\.AspNetCore/"
       ]
     },
     {
