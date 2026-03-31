@@ -26,7 +26,7 @@ jobs:
           docker save pr-test/frontend:latest | gzip > frontend-image.tar.gz
       
       - name: Upload Container Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: app-containers
           path: |
@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Download Container Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: app-containers
       
@@ -83,7 +83,7 @@ jobs:
       
       - name: Upload Trivy Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: trivy-container-reports
           path: |
@@ -101,7 +101,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Download Container Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: app-containers
       
@@ -141,7 +141,7 @@ jobs:
       
       - name: Upload ZAP Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: zap-scan-results
           path: report_html.html
@@ -168,7 +168,7 @@ jobs:
           dotnet-version: '10.x'
       
       - name: Download Container Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: app-containers
       
@@ -226,7 +226,7 @@ jobs:
           node-version: '24.x'
       
       - name: Download Container Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: app-containers
       
@@ -358,7 +358,7 @@ jobs:
             });
       
       - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: terraform-plan
           path: terraform/tfplan
