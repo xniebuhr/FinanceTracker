@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0  # Full history
 
       - name: Run Trufflehog
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@6171fa9f6676edf21e15bba41f049b18399d7372 # main
         with:
           path: ./
           extra_args: --only-verified
@@ -78,7 +78,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@c10b8064de6f491fea524254123dbe5e09572f13 # v4
         with:
           languages: csharp, javascript
       
@@ -94,7 +94,7 @@ jobs:
           dotnet build --configuration Release --no-restore
       
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v4
 
   # FORMATTING - Backend Code Style Checks
   lint-backend:
@@ -136,7 +136,7 @@ jobs:
         with:
           fetch-depth: 0 
       - name: Lint Code Base
-        uses: super-linter/super-linter@v8
+        uses: super-linter/super-linter@61abc07d755095a68f4987d1c2c3d1d64408f1f9 # v8
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_CSHARP: true              # .NET check
@@ -202,7 +202,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       
       - name: Run Trivy Config Scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           scan-type: 'config'
           scan-ref: './terraform'
@@ -210,7 +210,7 @@ jobs:
           output: 'trivy-terraform-results.sarif'
       
       - name: Upload Trivy Results
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4
         with:
           sarif_file: 'trivy-terraform-results.sarif'
       
