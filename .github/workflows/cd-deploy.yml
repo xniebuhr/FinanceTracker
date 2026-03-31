@@ -124,7 +124,7 @@ jobs:
           docker tag ${{ env.ACR_SERVER }}/frontend:${{ github.sha }} ${{ env.ACR_SERVER }}/frontend:latest
 
       - name: Security Scan - Backend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           image-ref: '${{ env.ACR_SERVER }}/backend:${{ github.sha }}'
           format: 'table'
@@ -132,7 +132,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Security Scan - Frontend
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # master
         with:
           image-ref: '${{ env.ACR_SERVER }}/frontend:${{ github.sha }}'
           format: 'table'
