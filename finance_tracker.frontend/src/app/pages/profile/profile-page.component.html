@@ -1,0 +1,76 @@
+<div class="page-auth page-auth--wide">
+  @if (!shell.isLoggedIn()) {
+    <div class="profile-gate">
+      <h1 class="page-auth__title">Your profile</h1>
+      <p class="page-auth__lede">Log in to view and edit your account details.</p>
+      <div class="profile-gate__actions">
+        <a routerLink="/login" class="btn-primary">Log in</a>
+        <a routerLink="/signup" class="btn-outline">Sign up</a>
+      </div>
+    </div>
+  } @else {
+    <div class="page-auth__intro">
+      <h1 class="page-auth__title">Profile</h1>
+      <p class="page-auth__lede">Account information and preferences.</p>
+    </div>
+
+    <div class="form-card profile-readonly">
+      <h2 class="form-section-title">Account</h2>
+      <div class="form-field">
+        <label class="form-label" for="pf-email">Email</label>
+        <input id="pf-email" class="form-input" type="email" [value]="account.email" readonly />
+        <p class="form-hint">Read-only for now.</p>
+      </div>
+    </div>
+
+    <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <h2 class="form-section-title">Your details</h2>
+      <div class="form-field">
+        <label class="form-label" for="pf-username">Username <span class="req" aria-hidden="true">*</span></label>
+        <input
+          id="pf-username"
+          class="form-input"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          autocapitalize="off"
+        />
+        @if (form.controls.username.touched && form.controls.username.hasError('required')) {
+          <p class="form-error">Username is required.</p>
+        }
+        @if (form.controls.username.touched && form.controls.username.hasError('minlength')) {
+          <p class="form-error">Use at least 3 characters.</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="pf-first">First name <span class="req" aria-hidden="true">*</span></label>
+        <input id="pf-first" class="form-input" type="text" formControlName="firstName" autocomplete="given-name" />
+        @if (form.controls.firstName.touched && form.controls.firstName.hasError('required')) {
+          <p class="form-error">First name is required.</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="pf-last">Last name</label>
+        <input id="pf-last" class="form-input" type="text" formControlName="lastName" autocomplete="family-name" />
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="pf-phone">Phone</label>
+        <input
+          id="pf-phone"
+          class="form-input"
+          type="tel"
+          formControlName="phoneNumber"
+          autocomplete="tel"
+          inputmode="tel"
+        />
+      </div>
+
+      <div class="form-actions form-actions--row">
+        <button type="submit" class="btn-primary" [disabled]="form.invalid">Save changes</button>
+      </div>
+    </form>
+  }
+</div>
