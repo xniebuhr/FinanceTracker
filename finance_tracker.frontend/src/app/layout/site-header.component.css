@@ -73,6 +73,7 @@
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
+  text-decoration: none;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -191,6 +192,7 @@
 }
 
 .profile__item {
+  display: block;
   width: 100%;
   text-align: left;
   padding: 0.5rem 0.65rem;
@@ -200,11 +202,27 @@
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
+  text-decoration: none;
   transition: background 0.12s ease;
 }
 
 .profile__item:hover {
   background: var(--color-accent-soft);
+}
+
+.profile__item + .profile__item {
+  border-top: 1px solid var(--color-border);
+}
+
+.profile__item--signout {
+  width: 100%;
+  font: inherit;
+  color: var(--color-expense);
+  font-weight: 500;
+}
+
+.profile__item--signout:hover {
+  background: #fff5f3;
 }
 
 @media (max-width: 900px) {

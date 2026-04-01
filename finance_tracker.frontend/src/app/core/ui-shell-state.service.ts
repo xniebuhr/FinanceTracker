@@ -15,4 +15,9 @@ export class UiShellStateService {
   toggleLoggedInPreview(): void {
     this.isLoggedIn.update((v) => !v);
   }
+
+  /** Clears session (replace with token revocation when auth is wired). */
+  signOut(): void {
+    this.isLoggedIn.set(false);
+  }
 }

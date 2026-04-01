@@ -13,8 +13,8 @@
 
     <div class="header__auth">
       @if (!shell.isLoggedIn()) {
-        <button type="button" class="btn btn--signup">Sign up</button>
-        <button type="button" class="btn btn--login">Log in</button>
+        <a routerLink="/signup" class="btn btn--signup">Sign up</a>
+        <a routerLink="/login" class="btn btn--login">Log in</a>
       } @else {
         <details class="profile">
           <summary class="profile__trigger" aria-label="Account menu">
@@ -29,7 +29,11 @@
             </span>
           </summary>
           <div class="profile__panel" role="menu">
-            <button type="button" class="profile__item" role="menuitem">Profile</button>
+            <a routerLink="/profile" class="profile__item" role="menuitem">Profile</a>
+            <a routerLink="/settings" class="profile__item" role="menuitem">Settings</a>
+            <button type="button" class="profile__item profile__item--signout" role="menuitem" (click)="signOut()">
+              Sign out
+            </button>
           </div>
         </details>
       }
