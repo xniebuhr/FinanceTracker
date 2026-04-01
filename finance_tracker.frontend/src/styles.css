@@ -1,1 +1,71 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global tokens — warm light shell, institutional calm (Vanguard / Ally–adjacent) */
+:root {
+  --color-page: #f4f2ed;
+  --color-surface: #fdfcfa;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e2ded6;
+  --color-border-strong: #c9c2b6;
+  --color-text: #1c1b19;
+  --color-text-muted: #5c5852;
+  --color-text-faint: #8a847a;
+  --color-primary: #243a5e;
+  --color-primary-hover: #1a2d4a;
+  --color-accent-soft: #e8eef6;
+  --color-income: #2d6a4f;
+  --color-expense: #9b4d3a;
+  --shadow-sm: 0 1px 2px rgba(28, 27, 25, 0.06);
+  --shadow-md: 0 8px 24px rgba(28, 27, 25, 0.08);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --header-height: 64px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-page);
+  background-image: radial-gradient(ellipse 120% 80% at 50% -20%, #e8e4dc 0%, transparent 55%);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
