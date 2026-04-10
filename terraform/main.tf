@@ -308,11 +308,20 @@ resource "azurerm_linux_web_app" "staging" {
       docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
     }
 
+    # Allow my IP
     ip_restriction {
       name       = "AllowMyHomeIP"
       ip_address = var.my_home_ip
       action     = "Allow"
       priority   = 100
+    }
+
+    # Default deny all I swear this crap is bugged man
+    ip_restriction {
+      name       = "DenyAll"
+      ip_address = "0.0.0.0/0"
+      action     = "Deny"
+      priority   = 2147483647
     }
   }
 
