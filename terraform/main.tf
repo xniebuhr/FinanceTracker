@@ -93,20 +93,19 @@ resource "azurerm_mssql_database" "main" {
   max_size_gb = 32
 }
 
+resource "azurerm_mssql_database_extended_auditing_policy" "main" {
+  database_id                             = azurerm_mssql_database.main.id
+  storage_endpoint                        = azurerm_storage_account.audit_logs.primary_blob_endpoint
+  storage_account_access_key              = azurerm_storage_account.audit_logs.primary_access_key
+  storage_account_access_key_is_secondary = false
+  retention_in_days                       = 30
+}
+
 resource "azurerm_mssql_firewall_rule" "allow_azure_services" {
   name             = "AllowAzureServices"
   server_id        = azurerm_mssql_server.main.id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
-}
-
-# SQL Server Auditing
-resource "azurerm_mssql_server_extended_auditing_policy" "main" {
-  server_id                               = azurerm_mssql_server.main.id
-  storage_endpoint                        = azurerm_storage_account.audit_logs.primary_blob_endpoint
-  storage_account_access_key              = azurerm_storage_account.audit_logs.primary_access_key
-  storage_account_access_key_is_secondary = false
-  retention_in_days                       = 30
 }
 
 # Storage Account for Audit Logs
@@ -301,6 +300,7 @@ resource "azurerm_linux_web_app" "staging" {
   site_config {
     always_on                               = false
     container_registry_use_managed_identity = true
+    ip_restriction_default_action           = "Deny"
 
     # Placeholder image
     application_stack {
