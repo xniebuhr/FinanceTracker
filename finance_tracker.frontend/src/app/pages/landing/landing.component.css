@@ -1,0 +1,115 @@
+.landing {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 3rem;
+}
+
+.hero {
+  text-align: center;
+  padding: 2.5rem 0 2rem;
+}
+
+.hero__title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+}
+
+.about-slot {
+  min-height: 120px;
+  margin-bottom: 2.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.snapshot__head {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.snapshot__title {
+  font-size: 1.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.snapshot__sub {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.snapshot__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card__label {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-card__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+}
+
+.stat-card--in .stat-card__value {
+  color: var(--color-income);
+}
+
+.stat-card--out .stat-card__value {
+  color: var(--color-expense);
+}
+
+.stat-card--net .stat-card__value {
+  color: var(--color-primary);
+}
+
+.snapshot__actions {
+  display: flex;
+  justify-content: center;
+}
+
+.btn--table-placeholder {
+  padding: 0.55rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: var(--color-surface-elevated);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+@media (max-width: 720px) {
+  .snapshot__grid {
+    grid-template-columns: 1fr;
+  }
+}

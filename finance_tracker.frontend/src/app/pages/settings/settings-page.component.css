@@ -1,0 +1,104 @@
+.settings-card {
+  margin-bottom: 1.25rem;
+}
+
+.form-hint--tight {
+  margin-top: -0.35rem;
+  margin-bottom: 1rem;
+}
+
+.danger-zone {
+  border-color: #e5cfc9;
+  background: linear-gradient(165deg, #fffdfb 0%, #fff8f6 55%, #fdf0ed 100%);
+}
+
+.danger-zone__title {
+  color: #6b3a32;
+  border-bottom-color: #e8cfc8;
+}
+
+.danger-zone__copy {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  max-width: 42rem;
+}
+
+.danger-zone__confirm {
+  padding: 1rem 1rem 0.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #e0b8ae;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.danger-zone__warn {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #5c2e28;
+}
+
+.danger-zone__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #8b3d32;
+  background: #fff;
+  border: 1px solid #d4a69a;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.btn-danger-outline:hover {
+  background: #fff5f3;
+  border-color: #b85a4c;
+  transform: translateY(-1px);
+}
+
+.btn-danger-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: #9b4d3a;
+  border: 1px solid #8a4434;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn-danger-solid:hover {
+  background: #863d2e;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-outline--muted {
+  color: var(--color-text-muted);
+  border-color: var(--color-border-strong);
+}
+
+.btn-outline--muted:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}

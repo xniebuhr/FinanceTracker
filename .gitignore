@@ -10,6 +10,9 @@ terraform/*.tfstate.backup
 terraform/*.tfstate.*
 terraform/*.auto.tfvars
 
+# Cursor
+.devcontainer/
+
 # Other folders / files
 .vs/
 bin/
