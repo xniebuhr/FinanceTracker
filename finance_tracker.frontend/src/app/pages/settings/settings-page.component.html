@@ -1,0 +1,102 @@
+<div class="page-auth page-auth--wide">
+  @if (!shell.isLoggedIn()) {
+    <div class="profile-gate">
+      <h1 class="page-auth__title">Settings</h1>
+      <p class="page-auth__lede">Log in to manage security and your account.</p>
+      <div class="profile-gate__actions">
+        <a routerLink="/login" class="btn-primary">Log in</a>
+        <a routerLink="/signup" class="btn-outline">Sign up</a>
+      </div>
+    </div>
+  } @else {
+    <div class="page-auth__intro">
+      <h1 class="page-auth__title">Settings</h1>
+      <p class="page-auth__lede">Password and account safety.</p>
+    </div>
+
+    <form class="form-card settings-card" [formGroup]="passwordForm" (ngSubmit)="onPasswordSubmit()" novalidate>
+      <h2 class="form-section-title">Change password</h2>
+      <p class="form-hint form-hint--tight">Use a strong password you do not reuse elsewhere.</p>
+
+      <div class="form-field">
+        <label class="form-label" for="st-current">Current password <span class="req" aria-hidden="true">*</span></label>
+        <input
+          id="st-current"
+          class="form-input"
+          type="password"
+          formControlName="currentPassword"
+          autocomplete="current-password"
+        />
+        @if (passwordForm.controls.currentPassword.touched && passwordForm.controls.currentPassword.hasError('required')) {
+          <p class="form-error">Current password is required.</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="st-new">New password <span class="req" aria-hidden="true">*</span></label>
+        <input
+          id="st-new"
+          class="form-input"
+          type="password"
+          formControlName="newPassword"
+          autocomplete="new-password"
+        />
+        @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('required')) {
+          <p class="form-error">New password is required.</p>
+        }
+        @if (passwordForm.controls.newPassword.touched && passwordForm.controls.newPassword.hasError('minlength')) {
+          <p class="form-error">Use at least 6 characters.</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="st-confirm">Confirm new password <span class="req" aria-hidden="true">*</span></label>
+        <input
+          id="st-confirm"
+          class="form-input"
+          type="password"
+          formControlName="confirmNewPassword"
+          autocomplete="new-password"
+        />
+        @if (
+          passwordForm.controls.confirmNewPassword.touched &&
+          passwordForm.controls.confirmNewPassword.hasError('required')
+        ) {
+          <p class="form-error">Confirm your new password.</p>
+        }
+        @if (
+          passwordForm.controls.confirmNewPassword.touched &&
+          passwordForm.hasError('newPasswordMismatch') &&
+          passwordForm.controls.confirmNewPassword.value
+        ) {
+          <p class="form-error">New passwords do not match.</p>
+        }
+      </div>
+
+      <div class="form-actions form-actions--row">
+        <button type="submit" class="btn-primary" [disabled]="passwordForm.invalid">Update password</button>
+      </div>
+    </form>
+
+    <section class="form-card danger-zone" aria-labelledby="danger-title">
+      <h2 id="danger-title" class="form-section-title danger-zone__title">Delete account</h2>
+      <p class="danger-zone__copy">
+        Permanently delete your account and associated data. This cannot be undone.
+      </p>
+
+      @if (deleteStep === 'idle') {
+        <button type="button" class="btn-danger-outline" (click)="beginDelete()">Delete account</button>
+      } @else {
+        <div class="danger-zone__confirm" role="alert">
+          <p class="danger-zone__warn">Are you sure? You will be signed out.</p>
+          <div class="danger-zone__actions">
+            <button type="button" class="btn-outline btn-outline--muted" (click)="cancelDelete()">Cancel</button>
+            <button type="button" class="btn-danger-solid" (click)="confirmDeleteAccount()">
+              Yes, delete my account
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>

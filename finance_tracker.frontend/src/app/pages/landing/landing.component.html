@@ -1,0 +1,33 @@
+<main class="landing">
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title" class="hero__title">Finance Tracker</h1>
+  </section>
+
+  <section class="about-slot" aria-label="Introduction">
+    <!-- Intentionally empty: marketing copy TBD -->
+  </section>
+
+  <section class="snapshot" aria-labelledby="snapshot-title">
+    <div class="snapshot__head">
+      <h2 id="snapshot-title" class="snapshot__title">At a glance</h2>
+      <p class="snapshot__sub">Illustrative figures for layout — not connected to live data.</p>
+    </div>
+    <div class="snapshot__grid">
+      <article class="stat-card stat-card--in">
+        <h3 class="stat-card__label">Money in</h3>
+        <p class="stat-card__value">{{ formatUsd(snapshot.income) }}</p>
+      </article>
+      <article class="stat-card stat-card--out">
+        <h3 class="stat-card__label">Money out</h3>
+        <p class="stat-card__value">{{ formatUsd(snapshot.expense) }}</p>
+      </article>
+      <article class="stat-card stat-card--net">
+        <h3 class="stat-card__label">Net</h3>
+        <p class="stat-card__value">{{ formatUsd(net()) }}</p>
+      </article>
+    </div>
+    <div class="snapshot__actions">
+      <button type="button" class="btn btn--table-placeholder">Full activity table</button>
+    </div>
+  </section>
+</main>
