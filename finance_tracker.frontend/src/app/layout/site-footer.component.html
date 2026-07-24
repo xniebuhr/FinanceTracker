@@ -1,0 +1,16 @@
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__links">
+      <a href="#" class="footer__link">Placeholder</a>
+      <a href="#" class="footer__link">Placeholder</a>
+      <a href="#" class="footer__link">Placeholder</a>
+    </div>
+    <p class="footer__legal">Placeholder disclaimer area</p>
+    <div class="footer__preview" aria-label="Development preview">
+      <span class="footer__preview-label">Preview header state</span>
+      <button type="button" class="footer__toggle" (click)="shell.toggleLoggedInPreview()">
+        {{ shell.isLoggedIn() ? 'Switch to logged out' : 'Switch to logged in' }}
+      </button>
+    </div>
+  </div>
+</footer>
